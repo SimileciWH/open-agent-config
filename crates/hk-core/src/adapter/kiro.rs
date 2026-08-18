@@ -7,9 +7,7 @@
 // Hooks are IDE Agent Hooks in `.kiro/hooks/*.json`, not CLI custom-agent
 // hooks embedded in `.kiro/agents/*.json`.
 
-use super::{
-    AgentAdapter, HookEntry, HookFormat, McpServerEntry, ProjectMarker, RemoteMcpSchema,
-};
+use super::{AgentAdapter, HookEntry, HookFormat, McpServerEntry, ProjectMarker, RemoteMcpSchema};
 use crate::models::ConfigScope;
 use std::path::{Path, PathBuf};
 
@@ -153,6 +151,7 @@ impl AgentAdapter for KiroAdapter {
                     transport,
                     url,
                     headers: super::json_string_map(val, "headers"),
+                    extra: Default::default(),
                     enabled: !val
                         .get("disabled")
                         .and_then(|v| v.as_bool())

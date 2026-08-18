@@ -18,9 +18,7 @@
 // Ignore reference:   https://docs.devin.ai/desktop/context-awareness/windsurf-ignore
 // Files:              .devinignore, .codeiumignore, .windsurfignore (project root)
 
-use super::{
-    AgentAdapter, HookEntry, HookFormat, McpServerEntry, ProjectMarker, RemoteMcpSchema,
-};
+use super::{AgentAdapter, HookEntry, HookFormat, McpServerEntry, ProjectMarker, RemoteMcpSchema};
 use std::path::{Path, PathBuf};
 
 pub struct WindsurfAdapter {
@@ -131,6 +129,7 @@ impl AgentAdapter for WindsurfAdapter {
                     transport,
                     url,
                     headers: super::json_string_map(val, "headers"),
+                    extra: Default::default(),
                     // Windsurf's MCP schema has no agent-native disable concept.
                     enabled: true,
                 }

@@ -5,7 +5,12 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
-    setupFiles: ["./src/test-setup.ts"],
+    setupFiles: ["./src/test-storage-setup.ts", "./src/test-setup.ts"],
+    environmentOptions: {
+      jsdom: {
+        url: "http://localhost/",
+      },
+    },
   },
   define: {
     __APP_VERSION__: JSON.stringify("1.2.1"),

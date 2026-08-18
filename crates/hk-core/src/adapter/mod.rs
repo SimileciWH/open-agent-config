@@ -7,9 +7,10 @@ pub mod dsh;
 pub mod gemini;
 pub mod hermes;
 pub mod hook_events;
+pub mod kimi;
 pub mod kiro;
-pub mod opencode;
 pub mod omp;
+pub mod opencode;
 pub mod windsurf;
 
 use crate::models::ConfigScope;
@@ -109,8 +110,7 @@ impl std::str::FromStr for McpTransport {
 /// pre-transport format, and `#[serde(default)]` keeps old blobs parseable.
 /// `name` is carried by the caller's context (asset name in the manifest);
 /// `enabled` is HarnessKit-internal and defaults to `true` on the install
-/// side (only OpenCode's source schema has a per-entry agent-native
-/// `enabled` — every other adapter always sets `true`).
+/// side (Kimi and OpenCode expose a per-entry agent-native enabled state).
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct McpServerEntry {
     #[serde(skip)]
@@ -129,6 +129,11 @@ pub struct McpServerEntry {
     /// are snapshotted to the DB (see `manager::redact_mcp_env`).
     #[serde(default, skip_serializing_if = "std::collections::HashMap::is_empty")]
     pub headers: std::collections::HashMap<String, String>,
+    /// Agent-specific fields that are not part of the common MCP model.
+    /// Currently populated by Kimi so cross-agent deployment can preserve
+    /// compatible fields or reject an unsafe conversion explicitly.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub extra: std::collections::BTreeMap<String, serde_json::Value>,
     #[serde(skip, default = "default_enabled")]
     pub enabled: bool,
 }
@@ -147,6 +152,7 @@ impl Default for McpServerEntry {
             transport: McpTransport::Stdio,
             url: None,
             headers: Default::default(),
+            extra: Default::default(),
             enabled: true,
         }
     }
@@ -230,6 +236,21 @@ pub(crate) fn json_string_vec(val: &serde_json::Value, key: &str) -> Vec<String>
                 .collect()
         })
         .unwrap_or_default()
+}
+
+/// Preserve JSON fields outside the common MCP model for adapters that need
+/// round-trip fidelity across their own config files.
+pub(crate) fn json_extra_fields(
+    val: &serde_json::Value,
+    known: &[&str],
+) -> std::collections::BTreeMap<String, serde_json::Value> {
+    let Some(obj) = val.as_object() else {
+        return Default::default();
+    };
+    obj.iter()
+        .filter(|(key, _)| !known.contains(&key.as_str()))
+        .map(|(key, value)| (key.clone(), value.clone()))
+        .collect()
 }
 
 /// Represents a hook entry parsed from an agent's config
@@ -351,6 +372,9 @@ pub enum RemoteMcpSchema {
     OpencodeRemote,
     /// YAML `url:` + `headers:` + optional `transport: sse` — Hermes.
     HermesUrl,
+    /// Kimi's JSON schema: HTTP uses `{url}`, while legacy SSE uses
+    /// `{transport: "sse", url}`.
+    Kimi,
     /// Agent has no remote MCP concept; deploying a remote entry is an error.
     Unsupported,
 }
@@ -701,6 +725,7 @@ pub fn all_adapters() -> Vec<Box<dyn AgentAdapter>> {
         Box::new(windsurf::WindsurfAdapter::new()),
         Box::new(opencode::OpencodeAdapter::new()),
         Box::new(hermes::HermesAdapter::new()),
+        Box::new(kimi::KimiAdapter::new()),
         Box::new(kiro::KiroAdapter::new()),
         Box::new(omp::OmpAdapter::new()),
         Box::new(dsh::DshAdapter::new()),
@@ -772,9 +797,9 @@ mod tests {
     }
 
     #[test]
-    fn test_all_adapters_returns_twelve() {
+    fn test_all_adapters_returns_thirteen() {
         let adapters = all_adapters();
-        assert_eq!(adapters.len(), 12);
+        assert_eq!(adapters.len(), 13);
         let names: Vec<&str> = adapters.iter().map(|a| a.name()).collect();
         assert!(names.contains(&"claude"));
         assert!(names.contains(&"cursor"));
@@ -785,6 +810,7 @@ mod tests {
         assert!(names.contains(&"windsurf"));
         assert!(names.contains(&"opencode"));
         assert!(names.contains(&"hermes"));
+        assert!(names.contains(&"kimi"));
         assert!(names.contains(&"kiro"));
         assert!(names.contains(&"omp"));
         assert!(names.contains(&"dsh"));
@@ -824,7 +850,7 @@ mod tests {
         // manager.rs::toggle_mcp — the trailing else there errors out.
         let adapters = all_adapters();
         for a in &adapters {
-            let expected = matches!(a.name(), "hermes" | "kiro" | "omp" | "dsh");
+            let expected = matches!(a.name(), "hermes" | "kimi" | "kiro" | "omp" | "dsh");
             assert_eq!(
                 a.supports_native_mcp_toggle(),
                 expected,
@@ -835,13 +861,13 @@ mod tests {
     }
 
     #[test]
-    fn test_supports_global_hook_install_false_only_for_kiro() {
+    fn test_supports_global_hook_install_false_for_agents_without_global_hooks() {
         // Kiro's docs claim `~/.kiro/hooks/` (user-level) but no released
         // version loads it (kirodotdev/Kiro#5440, #9857; verified on 1.0.89).
         // Everyone else keeps the default: global hook deploy allowed.
         let adapters = all_adapters();
         for a in &adapters {
-            let expected = a.name() != "kiro";
+            let expected = !matches!(a.name(), "kiro" | "kimi");
             assert_eq!(
                 a.supports_global_hook_install(),
                 expected,
@@ -874,6 +900,7 @@ mod tests {
             ("kiro", true, true, true, true, false),     // kirodotdev/Kiro#5440
             ("omp", true, true, false, false, true),     // hooks are JS/TS modules
             ("hermes", false, false, false, true, true), // global-only (hermes-agent#4667)
+            ("kimi", true, true, false, false, false), // Kimi lifecycle hooks are not managed in v1
             ("dsh", true, false, false, false, true), // MCP is cordis-layer only; no own hook format
         ];
 
@@ -888,9 +915,18 @@ mod tests {
             assert_eq!(caps.project_install.skill, skill, "{name} project skill");
             assert_eq!(caps.project_install.mcp, mcp, "{name} project mcp");
             assert_eq!(caps.project_install.hook, hook, "{name} project hook");
-            assert_eq!(caps.project_install.cli, skill, "{name} project cli follows skill");
-            assert_eq!(caps.hooks_supported, hooks_supported, "{name} hooks_supported");
-            assert_eq!(caps.global_hook_install, global_hook, "{name} global_hook_install");
+            assert_eq!(
+                caps.project_install.cli, skill,
+                "{name} project cli follows skill"
+            );
+            assert_eq!(
+                caps.hooks_supported, hooks_supported,
+                "{name} hooks_supported"
+            );
+            assert_eq!(
+                caps.global_hook_install, global_hook,
+                "{name} global_hook_install"
+            );
         }
     }
 
@@ -1005,6 +1041,7 @@ mod tests {
             ("copilot", ".github/skills"),
             ("opencode", ".opencode/skills"),
             ("kiro", ".kiro/skills"),
+            ("kimi", ".kimi-code/skills"),
             ("omp", ".omp/skills"),
             ("dsh", ".dsh/skills"),
             // hermes is global-only — no project skill dir (hermes-agent#4667).
