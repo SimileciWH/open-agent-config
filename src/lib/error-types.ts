@@ -1,4 +1,4 @@
-export type HkErrorKind =
+export type OacErrorKind =
   | "NotFound"
   | "Network"
   | "PermissionDenied"
@@ -10,20 +10,20 @@ export type HkErrorKind =
   | "Validation"
   | "Internal";
 
-export interface HkError {
-  kind: HkErrorKind;
+export interface OacError {
+  kind: OacErrorKind;
   message: string;
 }
 
 /**
- * Parse an unknown error into a structured HkError.
+ * Parse an unknown error into a structured OacError.
  * Handles:
  *   1. Tauri v2 JSON string format: '{"kind":"Network","message":"timeout"}'
  *   2. Already-parsed object format: {kind: "Network", message: "timeout"}
  *   3. Legacy plain string format: "Network error: timeout"
  */
-export function parseError(error: unknown): HkError {
-  // Tauri v2 sends HkError as a JSON string via IPC — try parsing it first
+export function parseError(error: unknown): OacError {
+  // Tauri v2 sends OacError as a JSON string via IPC — try parsing it first
   if (typeof error === "string") {
     try {
       const parsed = JSON.parse(error);
@@ -33,7 +33,7 @@ export function parseError(error: unknown): HkError {
         "kind" in parsed &&
         "message" in parsed
       ) {
-        return parsed as HkError;
+        return parsed as OacError;
       }
     } catch {
       // Not valid JSON — fall through to legacy string matching
@@ -69,13 +69,13 @@ export function parseError(error: unknown): HkError {
     "kind" in error &&
     "message" in error
   ) {
-    return error as HkError;
+    return error as OacError;
   }
 
   return { kind: "Internal", message: String(error) };
 }
 
 /** Whether the error is likely transient and worth retrying */
-export function isRetryable(error: HkError): boolean {
+export function isRetryable(error: OacError): boolean {
   return error.kind === "Network";
 }

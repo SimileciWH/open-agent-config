@@ -43,7 +43,7 @@ describe("humanizeError", () => {
     ).toBe("Config paths cannot contain '..' components");
   });
 
-  it("accepts Tauri-shaped HkError objects (not just strings)", () => {
+  it("accepts Tauri-shaped OacError objects (not just strings)", () => {
     // Tauri IPC rejects with a reified object, not a JSON string. Earlier
     // call sites wrapped errors in `String()` and produced "[object Object]".
     expect(humanizeError({ kind: "Validation", message: "bad input" })).toBe(

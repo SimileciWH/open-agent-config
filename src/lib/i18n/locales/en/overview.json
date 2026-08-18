@@ -1,7 +1,7 @@
 {
-  "welcome": "Welcome to HarnessKit",
+  "welcome": "Welcome to Open Agent Config",
   "terminal": {
-    "command": "hk status",
+    "command": "oac status",
     "agentLabel_one": "agent",
     "agentLabel_other": "agents",
     "extensionLabel_one": "extension",

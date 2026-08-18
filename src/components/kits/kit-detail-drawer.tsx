@@ -416,11 +416,11 @@ export function KitDetailDrawer({ kitId, onClose }: Props) {
           })}
           inputHint={t("exportImport.exportHint", {
             defaultValue:
-              "The file will be saved as <name>.hk-kit.zip in this folder.",
+              "The file will be saved as <name>.oac-kit.zip in this folder.",
           })}
           onSubmit={async (dir) => {
             const trimmed = dir.trim().replace(/\/+$/, "");
-            const fullPath = `${trimmed}/${details.summary.name}.hk-kit.zip`;
+            const fullPath = `${trimmed}/${details.summary.name}.oac-kit.zip`;
             await exportKit(kitId, fullPath);
             toast.success(
               t("exportImport.exportSuccess", {

@@ -9,14 +9,14 @@
 1. 已建立 fork 自己的 Release 仓库、发布流程和稳定下载地址。
 2. 已生成专属 Tauri updater 密钥；私钥及密码仅保存在 CI Secret，仓库只保存公钥。
 3. macOS、Windows、Linux 的目标包、命名、版本号和签名策略已确定。
-4. 已准备 fork 自己的 Web 升级说明页面，不能复用 `RealZST/HarnessKit` 的升级地址。
+4. 已准备 fork 自己的 Web 升级说明页面，不能复用旧上游仓库的升级地址。
 
 ## 同一变更集内的启用步骤
 
 1. 在 `src/config/release-channel.json` 中填写 fork 自己的 HTTPS Release API、升级说明 URL，并把 `enabled` 改为 `true`。
-2. 在 `crates/hk-desktop/tauri.conf.json` 中添加 fork 自己的 updater endpoint 和公钥，并设置 `createUpdaterArtifacts: true`。
-3. 在 `crates/hk-desktop/capabilities/default.json` 中恢复 `updater:default` 和 `process:allow-restart`。
-4. 确认 `crates/hk-desktop/src/main.rs::app_update_enabled` 注册 updater/process 插件。
+2. 在 `crates/oac-desktop/tauri.conf.json` 中添加 fork 自己的 updater endpoint 和公钥，并设置 `createUpdaterArtifacts: true`。
+3. 在 `crates/oac-desktop/capabilities/default.json` 中恢复 `updater:default` 和 `process:allow-restart`。
+4. 确认 `crates/oac-desktop/src/main.rs::app_update_enabled` 注册 updater/process 插件。
 5. 更新本模块卡、runtime boundary、Golden QA、Coverage 和 Sync Log。
 
 ## 验证顺序
@@ -27,7 +27,7 @@ npx vitest run src/stores/__tests__/web-update-store.test.ts
 npm test
 npm run build
 npm run lint
-cargo test -p hk-desktop
+cargo test -p oac-desktop
 cargo test --workspace
 npm run check:ai-docs
 git diff --check

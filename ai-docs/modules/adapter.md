@@ -2,16 +2,16 @@
 id: core.adapter
 level: L2
 status: runtime-verified
-verified_commit: 4321a802c021736592ba408b5ff913cff3919053
-last_verified: 2026-08-18
+verified_commit: 6567543deb124c3e871665334b9d972f1aa7c879
+last_verified: 2026-08-19
 source_paths:
-  - crates/hk-core/src/adapter/mod.rs
-  - crates/hk-core/src/adapter/*.rs
+  - crates/oac-core/src/adapter/mod.rs
+  - crates/oac-core/src/adapter/*.rs
 stable_anchors:
-  - crates/hk-core/src/adapter/mod.rs::AgentAdapter
-  - crates/hk-core/src/adapter/mod.rs::AgentCapabilities::from_adapter
-  - crates/hk-core/src/adapter/mod.rs::all_adapters
-  - crates/hk-core/src/adapter/kimi.rs::KimiAdapter
+  - crates/oac-core/src/adapter/mod.rs::AgentAdapter
+  - crates/oac-core/src/adapter/mod.rs::AgentCapabilities::from_adapter
+  - crates/oac-core/src/adapter/mod.rs::all_adapters
+  - crates/oac-core/src/adapter/kimi.rs::KimiAdapter
 known_gaps:
   - Kimi lifecycle hooks in config.toml are intentionally not managed in v1.
 ---
@@ -33,7 +33,7 @@ known_gaps:
 
 ## 新增 Agent 必须检查
 
-1. 新增 `crates/hk-core/src/adapter/<agent>.rs`。
+1. 新增 `crates/oac-core/src/adapter/<agent>.rs`。
 2. 在 `adapter/mod.rs` 声明模块并加入 `all_adapters()`。
 3. 明确 Skills、MCP、Hook、Plugin、Project 和 CLI 能力。
 4. 明确远程 MCP transport、unknown fields 和 secret 处理。

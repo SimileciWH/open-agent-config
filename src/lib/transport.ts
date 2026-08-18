@@ -4,6 +4,8 @@
  * In Tauri: uses IPC invoke(). In browser: uses HTTP POST to /api/{command}.
  */
 
+import { readMigratedStorage, writeMigratedStorage } from "./storage";
+
 // Tauri v2 injects __TAURI_INTERNALS__ on the window object
 const isTauri =
   typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -39,17 +41,17 @@ export function setAuthToken(token: string): void {
   authToken = token;
   // localStorage (not sessionStorage) so the token survives across new tabs
   // and reloads — the user only has to open the `?token=` URL once.
-  localStorage.setItem("hk_token", token);
+  writeMigratedStorage("oac_token", token, "hk_token");
 }
 
 export function getAuthToken(): string | null {
   if (authToken) return authToken;
-  authToken = localStorage.getItem("hk_token");
+  authToken = readMigratedStorage("oac_token", "hk_token");
   return authToken;
 }
 
 /**
- * Consume a `?token=` query param (printed by `hk serve` for authenticated
+ * Consume a `?token=` query param (printed by `oac serve` for authenticated
  * binds): store it, then strip it from the address bar via replaceState so the
  * token doesn't linger in browser history or leak via the Referer header on
  * outbound asset/badge requests. Mirrors Jupyter's `?token=` login flow.
@@ -95,7 +97,7 @@ async function httpInvoke<T>(
   if (!response.ok) {
     const text = await response.text();
     // Throw as-is — parseError() in error-types.ts handles both
-    // JSON HkError strings and plain text formats
+    // JSON OacError strings and plain text formats
     throw text || `HTTP ${response.status}`;
   }
 

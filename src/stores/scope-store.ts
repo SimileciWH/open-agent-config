@@ -1,9 +1,15 @@
 import { create } from "zustand";
 import i18n from "@/lib/i18n";
+import {
+  readMigratedStorage,
+  removeMigratedStorage,
+  writeMigratedStorage,
+} from "@/lib/storage";
 import type { Project } from "@/lib/types";
 import { toast } from "./toast-store";
 
-const LS_KEY = "HK_SCOPE_LAST_USED";
+const LS_KEY = "OAC_SCOPE_LAST_USED";
+const LEGACY_LS_KEY = "HK_SCOPE_LAST_USED";
 
 export type ScopeValue =
   | { type: "all" }
@@ -50,7 +56,7 @@ export function scopesEqual(a: ScopeValue, b: ScopeValue): boolean {
 
 function readLocalStorage(projects: Project[]): ScopeValue | null {
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = readMigratedStorage(LS_KEY, LEGACY_LS_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as ScopeValue;
     if (parsed.type === "global") return parsed;
@@ -65,14 +71,14 @@ function readLocalStorage(projects: Project[]): ScopeValue | null {
     }
     return null;
   } catch {
-    localStorage.removeItem(LS_KEY);
+    removeMigratedStorage(LS_KEY, LEGACY_LS_KEY);
     return null;
   }
 }
 
 function writeLocalStorage(scope: ScopeValue) {
   try {
-    localStorage.setItem(LS_KEY, JSON.stringify(scope));
+    writeMigratedStorage(LS_KEY, JSON.stringify(scope), LEGACY_LS_KEY);
   } catch {
     // ignore (private mode / quota)
   }

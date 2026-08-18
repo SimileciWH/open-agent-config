@@ -1,0 +1,14 @@
+[
+  {
+    "agent": "OAC",
+    "tip": "Use Project Paths to keep project-scoped extensions separate from global agent configuration."
+  },
+  {
+    "agent": "OAC",
+    "tip": "Review an MCP server's command, environment variables, and network permissions before enabling it."
+  },
+  {
+    "agent": "OAC",
+    "tip": "Export a Kit as an .oac-kit.zip archive when you need a portable, reviewable configuration bundle."
+  }
+]

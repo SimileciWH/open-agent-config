@@ -35,7 +35,7 @@ describe("useScope", () => {
       name: "alpha",
       path: "/p/alpha",
     });
-    expect(localStorage.getItem("HK_SCOPE_LAST_USED")).toBe(
+    expect(localStorage.getItem("OAC_SCOPE_LAST_USED")).toBe(
       JSON.stringify({ type: "project", name: "alpha", path: "/p/alpha" }),
     );
   });

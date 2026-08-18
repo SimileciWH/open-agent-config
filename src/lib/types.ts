@@ -107,7 +107,7 @@ function extractDeveloper(url: string | null): string {
  *  URL resolution: marketplace-installed skills end up with `source.url=null`
  *  because the scanner re-discovers them as files in agent skill dirs and has
  *  no way to know they came from a marketplace. The authoritative "where did
- *  this come from" record lives in `install_meta.url` (written by HK at
+ *  this come from" record lives in `install_meta.url` (written by OAC at
  *  install time). Fall back to it so the 6 marketplace copies of the same
  *  skill group together and stay separate from a same-named hand-written
  *  project skill (which has neither field set). */
@@ -148,7 +148,7 @@ export function instanceDir(inst: Extension): string | null {
  *  Resolution order: install_meta.url → source.url → pack (synthesized to a
  *  GitHub URL so extractDeveloper handles it uniformly).
  *
- *  `install_meta.url` (written by HK at install time, not user-editable) is
+ *  `install_meta.url` (written by OAC at install time, not user-editable) is
  *  the authoritative origin and wins first. `source.url` comes from the
  *  scanner walking up to the nearest `.git` remote — usually null for
  *  marketplace skills, but it can be a *wrong* value when the user keeps an
@@ -206,7 +206,7 @@ export function groupOwnerRepo(
 
 /** Whether `pack` matches the GitHub `owner/repo` shape that the backend's
  *  `service::bind_pack` will synthesize an install_meta URL from. Must stay
- *  in sync with `is_valid_pack_format` in `crates/hk-core/src/service.rs`:
+ *  in sync with `is_valid_pack_format` in `crates/oac-core/src/service.rs`:
  *  exactly one `/`; owner half is alnum / `-` / `_` (no `.`, so non-github
  *  paste forms like `gitlab.com/foo` get rejected before we synthesize a
  *  wrong github URL); repo half also allows `.` (legitimate repo names). */
@@ -223,7 +223,7 @@ export function isValidPackFormat(pack: string): boolean {
  *  field. Returns the input trimmed-and-unchanged when no recognized pattern
  *  matches; `isValidPackFormat` then decides whether to accept it.
  *
- *  Mirrors `normalize_pack` in `crates/hk-core/src/service.rs` — the backend
+ *  Mirrors `normalize_pack` in `crates/oac-core/src/service.rs` — the backend
  *  applies the same normalization defensively for any non-UI client. */
 export function normalizePack(input: string): string {
   const trimmed = input.trim();
@@ -318,7 +318,7 @@ export interface AgentInfo {
   capabilities: AgentCapabilities;
 }
 
-/** Field names mirror the Rust structs in crates/hk-core/src/models.rs
+/** Field names mirror the Rust structs in crates/oac-core/src/models.rs
  *  verbatim (snake_case, no serde renames). */
 export interface KindFlags {
   skill: boolean;

@@ -26,7 +26,7 @@ function agent(name: string, capabilities: AgentCapabilities): AgentInfo {
 }
 
 // Shapes mirror AgentCapabilities::from_adapter output (backend matrix
-// test: test_agent_capabilities_matrix in crates/hk-core/src/adapter/mod.rs).
+// test: test_agent_capabilities_matrix in crates/oac-core/src/adapter/mod.rs).
 const CLAUDE = agent("claude", {
   project_install: { skill: true, mcp: true, hook: true, cli: true },
   hooks_supported: true,

@@ -26,12 +26,13 @@ relative/path/to/file::symbol
 
 ## 当前基线
 
-- 基线提交：`4321a802c021736592ba408b5ff913cff3919053`
-- 当前产品名仍有上游 HarnessKit 痕迹，品牌重命名尚未完成。
+- 基线提交：`6567543deb124c3e871665334b9d972f1aa7c879`
+- 当前产品、命令、crate、数据目录、Kit 包、前端状态键和发布资产统一使用 Open Agent Config / OAC 身份。
+- 旧身份字符串只允许作为一次性迁移输入或上游隔离门禁；新写入、运行时标识和用户可见发布说明不得继续产生旧身份。
 - 应用自身升级通道已关闭；在 fork 自有 Release、更新源和签名密钥完成前，不得重新启用。
 - 当前已注册 13 个 Agent Adapter，包含 Claude Code、Codex 和 Kimi Code。
 - Kimi Code 已完成第一版 Skills/MCP 接入；Hook 生命周期管理仍明确留在后续范围。
-- 本轮源码和文档验证基于基线提交之上的 working tree，未推送远端。
+- 本轮源码和文档验证基于该基线提交之上的 working tree，未推送远端。
 
 ## 状态定义
 

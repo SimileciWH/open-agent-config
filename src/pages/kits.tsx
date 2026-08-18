@@ -7,11 +7,13 @@ import { InstallDialog } from "@/components/kits/install-dialog";
 import { KitDetailDrawer } from "@/components/kits/kit-detail-drawer";
 import { KitEditorDialog } from "@/components/kits/kit-editor-dialog";
 import { PathInputDialog } from "@/components/kits/path-input-dialog";
+import { readMigratedStorage, writeMigratedStorage } from "@/lib/storage";
 import { useKitStore } from "@/stores/kit-store";
 import { useScopeStore } from "@/stores/scope-store";
 import { toast } from "@/stores/toast-store";
 
-const ONBOARDING_KEY = "hk:kits-v4:onboarding-toast-shown";
+const ONBOARDING_KEY = "oac:kits-v4:onboarding-toast-shown";
+const LEGACY_ONBOARDING_KEY = "hk:kits-v4:onboarding-toast-shown";
 
 interface BatchInstallReq {
   kitIds: string[];
@@ -103,9 +105,12 @@ export default function KitsPage() {
 
   // First-time onboarding toast: fires once when a user goes from 0 to ≥1 Kits.
   useEffect(() => {
-    if (kits.length >= 1 && !localStorage.getItem(ONBOARDING_KEY)) {
+    if (
+      kits.length >= 1 &&
+      !readMigratedStorage(ONBOARDING_KEY, LEGACY_ONBOARDING_KEY)
+    ) {
       toast.info(t("toast.firstKitOnboarding"));
-      localStorage.setItem(ONBOARDING_KEY, "1");
+      writeMigratedStorage(ONBOARDING_KEY, "1", LEGACY_ONBOARDING_KEY);
     }
   }, [kits.length, t]);
 
@@ -296,23 +301,30 @@ export default function KitsPage() {
           title={t("exportImport.importTitle", { defaultValue: "Import Kit" })}
           description={t("exportImport.importDescription", {
             defaultValue:
-              "Pick or paste the path to a Kit archive (.hk-kit.zip).",
+              "Pick or paste an OAC Kit archive (.oac-kit.zip; legacy .hk-kit.zip is also supported).",
           })}
           submitLabel={t("exportImport.import", { defaultValue: "Import" })}
           pickerMode="open"
-          pickerFilters={[{ name: "HarnessKit Kit", extensions: ["zip"] }]}
+          pickerFilters={[
+            { name: "Open Agent Config Kit", extensions: ["zip"] },
+          ]}
           inputPlaceholder={t("exportImport.importPlaceholder", {
-            defaultValue: "Paste a .hk-kit.zip file path…",
+            defaultValue: "Paste a .oac-kit.zip file path…",
           })}
           inputHint={t("exportImport.importHint", {
-            defaultValue: "Please select a .hk-kit.zip file.",
+            defaultValue:
+              "Please select a .oac-kit.zip or legacy .hk-kit.zip file.",
           })}
           onSubmit={async (p) => {
-            if (!p.toLowerCase().endsWith(".hk-kit.zip")) {
+            const lowerPath = p.toLowerCase();
+            if (
+              !lowerPath.endsWith(".oac-kit.zip") &&
+              !lowerPath.endsWith(".hk-kit.zip")
+            ) {
               throw new Error(
                 t("exportImport.importExtensionError", {
                   defaultValue:
-                    "Please select a .hk-kit.zip file (the path must end with .hk-kit.zip).",
+                    "Please select a .oac-kit.zip or legacy .hk-kit.zip file.",
                 }),
               );
             }

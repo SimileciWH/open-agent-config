@@ -59,8 +59,8 @@ const THEME_OPTIONS: {
 ];
 
 const ICON_OPTIONS: { value: AppIcon; label: string; src: string }[] = [
-  { value: "icon-1", label: "Tiesen", src: "/icons/app-icon-1.png" },
-  { value: "icon-2", label: "Claude", src: "/icons/app-icon-2.png" },
+  { value: "icon-1", label: "OAC Navy", src: "/icons/app-icon-1.png" },
+  { value: "icon-2", label: "OAC Orange", src: "/icons/app-icon-2.png" },
 ];
 
 const LANGUAGE_OPTIONS: {
@@ -898,12 +898,12 @@ export default function SettingsPage() {
 
           {/* Footer */}
           <footer className="border-t border-border pt-6 pb-2 flex items-center justify-center gap-1.5 text-xs text-muted-foreground/50">
-            <span>HarnessKit</span>
+            <span>Open Agent Config</span>
             <span>&middot;</span>
             <span>{t("footer.tagline")}</span>
             <span>&middot;</span>
             <a
-              href="https://github.com/RealZST/HarnessKit"
+              href="https://github.com/SimileciWH/open-agent-config"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-muted-foreground transition-colors"

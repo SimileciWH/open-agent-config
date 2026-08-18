@@ -26,10 +26,12 @@ describe("i18n language preference helpers", () => {
     expect(getStoredLanguagePreference()).toBe("system");
   });
 
-  it("keeps explicit language preferences from storage", async () => {
+  it("migrates explicit language preferences from legacy storage", async () => {
     localStorage.setItem("hk-language", "zh");
     const { getStoredLanguagePreference } = await import("../i18n");
     expect(getStoredLanguagePreference()).toBe("zh");
+    expect(localStorage.getItem("oac-language")).toBe("zh");
+    expect(localStorage.getItem("hk-language")).toBeNull();
   });
 
   it("treats invalid stored values as system", async () => {
@@ -91,7 +93,7 @@ describe("i18n language preference helpers", () => {
 
     await applyLanguagePreference("system");
 
-    expect(localStorage.getItem("hk-language")).toBe("system");
+    expect(localStorage.getItem("oac-language")).toBe("system");
     expect(i18n.resolvedLanguage).toBe("zh");
   });
 
@@ -101,7 +103,7 @@ describe("i18n language preference helpers", () => {
 
     await applyLanguagePreference("zh");
 
-    expect(localStorage.getItem("hk-language")).toBe("zh");
+    expect(localStorage.getItem("oac-language")).toBe("zh");
     expect(i18n.resolvedLanguage).toBe("zh");
   });
 });

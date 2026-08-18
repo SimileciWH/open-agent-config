@@ -3,9 +3,14 @@ import {
   appUpdatePolicy,
   isAppUpdateEnabledForRuntime,
 } from "@/lib/app-update-policy";
-import { cleanChangelog, DISMISS_KEY_PREFIX } from "./update-store";
+import { readMigratedStorage, writeMigratedStorage } from "@/lib/storage";
+import {
+  cleanChangelog,
+  DISMISS_KEY_PREFIX,
+  LEGACY_DISMISS_KEY_PREFIX,
+} from "./update-store";
 
-const CACHE_KEY = "hk-web-update-cache";
+const CACHE_KEY = "oac-web-update-cache";
 const CACHE_TTL_MS = 60 * 60 * 1000;
 const MIN_UPDATE_CHECK_VISIBLE_MS = 600;
 
@@ -113,7 +118,10 @@ export const useWebUpdateStore = create<WebUpdateState>((set, get) => ({
       if (!isNewer(__APP_VERSION__, release.tag)) return;
       const version = release.tag.replace(/^v/, "");
       const dismissed =
-        localStorage.getItem(`${DISMISS_KEY_PREFIX}${version}`) === "1";
+        readMigratedStorage(
+          `${DISMISS_KEY_PREFIX}${version}`,
+          `${LEGACY_DISMISS_KEY_PREFIX}${version}`,
+        ) === "1";
       set({
         available: { version, body: cleanChangelog(release.body) },
         dismissed,
@@ -141,7 +149,11 @@ export const useWebUpdateStore = create<WebUpdateState>((set, get) => ({
     const { available } = get();
     if (!available) return;
     try {
-      localStorage.setItem(`${DISMISS_KEY_PREFIX}${available.version}`, "1");
+      writeMigratedStorage(
+        `${DISMISS_KEY_PREFIX}${available.version}`,
+        "1",
+        `${LEGACY_DISMISS_KEY_PREFIX}${available.version}`,
+      );
     } catch {
       // localStorage unavailable — keep the in-memory dismissal anyway
     }

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { api } from "@/lib/invoke";
+import { readMigratedStorage, writeMigratedStorage } from "@/lib/storage";
 import type {
   ConfigScope,
   InstallResult,
@@ -230,15 +231,18 @@ export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
       auditCache: new Map(),
     });
 
-    const cacheKey = `hk_trending_${tab}`;
+    const cacheKey = `oac_trending_${tab}`;
+    const legacyCacheKey = `hk_trending_${tab}`;
     const saveToDisk = (items: MarketplaceItem[]) => {
       try {
-        localStorage.setItem(cacheKey, JSON.stringify(items));
+        writeMigratedStorage(cacheKey, JSON.stringify(items), legacyCacheKey);
       } catch {}
     };
     const loadFromDisk = (): MarketplaceItem[] => {
       try {
-        return JSON.parse(localStorage.getItem(cacheKey) ?? "[]");
+        return JSON.parse(
+          readMigratedStorage(cacheKey, legacyCacheKey) ?? "[]",
+        );
       } catch {
         return [];
       }

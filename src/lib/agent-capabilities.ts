@@ -22,7 +22,7 @@ export function canReceiveMcpTransport(
 /** Whether `agent` can take an install of `kind` at `scope`.
  *
  *  Reads the backend-derived `AgentInfo.capabilities` (computed from the
- *  Rust adapter declarations in crates/hk-core/src/adapter/*.rs — see
+ *  Rust adapter declarations in crates/oac-core/src/adapter/*.rs — see
  *  AgentCapabilities::from_adapter), so UI gating and backend deploy
  *  behavior share one source of truth and cannot drift.
  *

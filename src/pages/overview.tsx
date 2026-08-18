@@ -16,6 +16,11 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { AgentCard } from "@/components/shared/agent-card";
 import { api } from "@/lib/invoke";
+import {
+  readMigratedStorage,
+  removeMigratedStorage,
+  writeMigratedStorage,
+} from "@/lib/storage";
 import type { AgentDetail, DashboardStats } from "@/lib/types";
 import {
   agentDisplayName,
@@ -38,24 +43,28 @@ interface Tip {
   source?: string;
 }
 
-const TIPS_URL =
-  "https://raw.githubusercontent.com/RealZST/harnesskit-resources/main/tips/tips.json";
-const TIPS_CACHE_KEY = "harnesskit-tips-cache";
+const TIPS_URL = "/tips.json";
+const TIPS_CACHE_KEY = "oac-tips-cache";
+const LEGACY_TIPS_CACHE_KEY = "harnesskit-tips-cache";
 
 async function fetchTips(): Promise<Tip[]> {
   try {
     const res = await fetch(TIPS_URL);
     if (!res.ok) throw new Error("fetch failed");
     const tips: Tip[] = await res.json();
-    localStorage.setItem(TIPS_CACHE_KEY, JSON.stringify(tips));
+    writeMigratedStorage(
+      TIPS_CACHE_KEY,
+      JSON.stringify(tips),
+      LEGACY_TIPS_CACHE_KEY,
+    );
     return tips;
   } catch {
-    const cached = localStorage.getItem(TIPS_CACHE_KEY);
+    const cached = readMigratedStorage(TIPS_CACHE_KEY, LEGACY_TIPS_CACHE_KEY);
     if (cached) {
       try {
         return JSON.parse(cached) as Tip[];
       } catch {
-        localStorage.removeItem(TIPS_CACHE_KEY);
+        removeMigratedStorage(TIPS_CACHE_KEY, LEGACY_TIPS_CACHE_KEY);
       }
     }
     return [];

@@ -1,12 +1,14 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+import { readMigratedStorage, writeMigratedStorage } from "@/lib/storage";
 
 export const SUPPORTED_LANGUAGES = ["en", "zh", "zh-TW"] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 export const LANGUAGE_PREFERENCES = ["system", ...SUPPORTED_LANGUAGES] as const;
 export type LanguagePreference = (typeof LANGUAGE_PREFERENCES)[number];
 
-export const LANGUAGE_STORAGE_KEY = "hk-language";
+export const LANGUAGE_STORAGE_KEY = "oac-language";
+const LEGACY_LANGUAGE_STORAGE_KEY = "hk-language";
 
 // Single source of truth for language fallbacks; languages not listed fall
 // straight back to English. Consumed by the i18next config below and by
@@ -80,7 +82,10 @@ export function detectSystemLanguage(): SupportedLanguage {
 export function getStoredLanguagePreference(): LanguagePreference {
   if (typeof localStorage === "undefined") return "system";
 
-  const value = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  const value = readMigratedStorage(
+    LANGUAGE_STORAGE_KEY,
+    LEGACY_LANGUAGE_STORAGE_KEY,
+  );
   return isLanguagePreference(value) ? value : "system";
 }
 
@@ -94,7 +99,11 @@ export async function applyLanguagePreference(
   preference: LanguagePreference,
 ): Promise<void> {
   if (typeof localStorage !== "undefined") {
-    localStorage.setItem(LANGUAGE_STORAGE_KEY, preference);
+    writeMigratedStorage(
+      LANGUAGE_STORAGE_KEY,
+      preference,
+      LEGACY_LANGUAGE_STORAGE_KEY,
+    );
   }
 
   await i18n.changeLanguage(resolveLanguagePreference(preference));

@@ -28,7 +28,7 @@ export function useServerInfo(): ServerInfo | null {
         cached = { nodeName: res.node_name };
         setInfo(cached);
         if (cached.nodeName) {
-          document.title = `HarnessKit · ${cached.nodeName}`;
+          document.title = `Open Agent Config · ${cached.nodeName}`;
         }
       })
       .catch(() => {

@@ -69,7 +69,7 @@ describe("scope-store hydrate", () => {
 
   it("writes the resolved value back to localStorage", () => {
     useScopeStore.getState().hydrate("all", []); // coerces to global
-    expect(localStorage.getItem("HK_SCOPE_LAST_USED")).toBe(
+    expect(localStorage.getItem("OAC_SCOPE_LAST_USED")).toBe(
       JSON.stringify({ type: "global" }),
     );
   });

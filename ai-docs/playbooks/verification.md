@@ -17,19 +17,21 @@ npm ci
 npm test
 npm run build
 npm run lint
+npm audit --audit-level=high
 ```
 
 ## Rust 验证
 
 ```bash
 cargo test --workspace
+cargo metadata --no-deps --format-version 1
 ```
 
 涉及 Web/CLI 时补充：
 
 ```bash
-cargo test -p hk-web
-cargo test -p hk-cli
+cargo test -p oac-web
+cargo test -p oac-cli
 ```
 
 涉及 Tauri 时在具备 Tauri CLI 和平台依赖后运行：
@@ -41,3 +43,5 @@ cargo tauri dev
 ## 结果记录
 
 每次验证必须在 `ai-docs/SYNC_LOG.md` 记录命令、结果、环境和未验证项。没有执行过的命令不能写成通过。
+
+身份迁移变更还必须运行旧目录、Kit、Kiro、Codex、DSH 和 localStorage 的兼容测试与残留字符串扫描。残留项只能属于明确记录的迁移输入或上游隔离门禁，Desktop bundle ID 和用户可见发布说明必须使用 OAC 身份。

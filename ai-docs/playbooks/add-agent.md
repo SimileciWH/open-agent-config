@@ -9,7 +9,7 @@
 ## 实施顺序
 
 1. 记录官方配置路径、scope、Skills 发现规则、MCP schema、Hook/Plugin 能力和原生启用机制。
-2. 新建 `crates/hk-core/src/adapter/<agent>.rs`，实现 `AgentAdapter`。
+2. 新建 `crates/oac-core/src/adapter/<agent>.rs`，实现 `AgentAdapter`。
 3. 在 `adapter/mod.rs` 注册模块和 `all_adapters()`。
 4. 若支持 native MCP toggle，在 `manager::toggle_mcp` 增加显式 writer 分支，并增加 round-trip 测试。
 5. 检查 `deployer.rs` 的格式、transport、未知字段和 secret 处理。

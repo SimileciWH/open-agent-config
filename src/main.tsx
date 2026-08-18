@@ -4,7 +4,7 @@ import App from "./App";
 import "./lib/i18n";
 import { consumeUrlToken } from "./lib/transport";
 
-// Apply a `?token=` login param (printed by `hk serve`) before anything renders
+// Apply a `?token=` login param (printed by `oac serve`) before anything renders
 // or fires a request.
 consumeUrlToken();
 

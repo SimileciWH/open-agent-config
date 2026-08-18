@@ -2,36 +2,36 @@
   "schema_version": 1,
   "repository": {
     "name": "open-agent-config",
-    "upstream": "RealZST/HarnessKit",
+    "lineage": "historical fork; see Git history for immutable upstream attribution",
     "fork": "SimileciWH/open-agent-config",
     "license": "Apache-2.0",
-    "baseline_commit": "4321a802c021736592ba408b5ff913cff3919053",
+    "baseline_commit": "6567543deb124c3e871665334b9d972f1aa7c879",
     "source_of_truth": "source code and tests"
   },
   "inventory": {
-    "source_files": 336,
-    "rust_files": 89,
-    "typescript_and_tsx_files": 155,
+    "source_files": 341,
+    "rust_files": 90,
+    "typescript_and_tsx_files": 157,
     "workflow_files": 4,
     "frontend_root": "src",
     "rust_workspace_root": "crates"
   },
   "workspace": {
-    "crates/hk-core": {
+    "crates/oac-core": {
       "role": "shared scanning, models, SQLite store, adapters, deployment and services",
-      "entry": "crates/hk-core/src/lib.rs"
+      "entry": "crates/oac-core/src/lib.rs"
     },
-    "crates/hk-cli": {
-      "role": "hk command line interface and embedded web server launcher",
-      "entry": "crates/hk-cli/src/main.rs"
+    "crates/oac-cli": {
+      "role": "oac command line interface and embedded web server launcher",
+      "entry": "crates/oac-cli/src/main.rs"
     },
-    "crates/hk-web": {
+    "crates/oac-web": {
       "role": "Axum HTTP API and embedded frontend serving",
-      "entry": "crates/hk-web/src/lib.rs"
+      "entry": "crates/oac-web/src/lib.rs"
     },
-    "crates/hk-desktop": {
+    "crates/oac-desktop": {
       "role": "Tauri desktop shell and IPC commands",
-      "entry": "crates/hk-desktop/src/main.rs"
+      "entry": "crates/oac-desktop/src/main.rs"
     },
     "src": {
       "role": "React 19 + Vite frontend shared by Web and Tauri",
@@ -41,17 +41,17 @@
   "runtime_entrypoints": [
     {
       "id": "cli-web",
-      "path": "crates/hk-cli/src/main.rs::main",
-      "flow": "CLI parses commands; serve starts hk-web; other commands open Store, scan, then dispatch"
+      "path": "crates/oac-cli/src/main.rs::main",
+      "flow": "CLI parses commands; serve starts oac-web; other commands open Store, scan, then dispatch"
     },
     {
       "id": "web",
-      "path": "crates/hk-web/src/lib.rs::serve",
-      "flow": "open ~/.harnesskit/metadata.db; build WebState with adapters; serve Axum router"
+      "path": "crates/oac-web/src/lib.rs::serve",
+      "flow": "migrate legacy state, open ~/.open-agent-config/metadata.db, build WebState with adapters, and serve the Axum router"
     },
     {
       "id": "desktop",
-      "path": "crates/hk-desktop/src/main.rs::main",
+      "path": "crates/oac-desktop/src/main.rs::main",
       "flow": "open Store; build AppState with adapters; register Tauri commands"
     },
     {
@@ -77,26 +77,26 @@
       "level": "L2",
       "status": "runtime-verified",
       "card": "modules/adapter.md",
-      "sources": ["crates/hk-core/src/adapter/mod.rs", "crates/hk-core/src/adapter/*.rs"],
+      "sources": ["crates/oac-core/src/adapter/mod.rs", "crates/oac-core/src/adapter/*.rs"],
       "anchors": [
-        "crates/hk-core/src/adapter/mod.rs::AgentAdapter",
-        "crates/hk-core/src/adapter/mod.rs::AgentCapabilities::from_adapter",
-        "crates/hk-core/src/adapter/mod.rs::all_adapters",
-        "crates/hk-core/src/adapter/kimi.rs::KimiAdapter"
+        "crates/oac-core/src/adapter/mod.rs::AgentAdapter",
+        "crates/oac-core/src/adapter/mod.rs::AgentCapabilities::from_adapter",
+        "crates/oac-core/src/adapter/mod.rs::all_adapters",
+        "crates/oac-core/src/adapter/kimi.rs::KimiAdapter"
       ],
-      "consumers": ["scanner", "manager", "deployer", "service", "hk-web", "hk-desktop"]
+      "consumers": ["scanner", "manager", "deployer", "service", "oac-web", "oac-desktop"]
     },
     {
       "id": "core.scanner",
       "level": "L2",
       "status": "runtime-verified",
       "card": "modules/scanner.md",
-      "sources": ["crates/hk-core/src/scanner.rs"],
+      "sources": ["crates/oac-core/src/scanner.rs"],
       "anchors": [
-        "crates/hk-core/src/scanner.rs::scan_all",
-        "crates/hk-core/src/scanner.rs::scan_adapter",
-        "crates/hk-core/src/scanner.rs::skill_locations",
-        "crates/hk-core/src/scanner.rs::scan_mcp_servers"
+        "crates/oac-core/src/scanner.rs::scan_all",
+        "crates/oac-core/src/scanner.rs::scan_adapter",
+        "crates/oac-core/src/scanner.rs::skill_locations",
+        "crates/oac-core/src/scanner.rs::scan_mcp_servers"
       ],
       "consumers": ["store", "manager", "web extensions handler", "desktop extensions commands"]
     },
@@ -105,13 +105,13 @@
       "level": "L2",
       "status": "runtime-verified",
       "card": "modules/manager-deployer.md",
-      "sources": ["crates/hk-core/src/manager.rs", "crates/hk-core/src/deployer.rs"],
+      "sources": ["crates/oac-core/src/manager.rs", "crates/oac-core/src/deployer.rs"],
       "anchors": [
-        "crates/hk-core/src/manager.rs::toggle_extension_with_adapters",
-        "crates/hk-core/src/manager.rs::toggle_skill",
-        "crates/hk-core/src/manager.rs::toggle_mcp",
-        "crates/hk-core/src/deployer.rs::deploy_mcp_server",
-        "crates/hk-core/src/deployer.rs::set_kimi_mcp_enabled"
+        "crates/oac-core/src/manager.rs::toggle_extension_with_adapters",
+        "crates/oac-core/src/manager.rs::toggle_skill",
+        "crates/oac-core/src/manager.rs::toggle_mcp",
+        "crates/oac-core/src/deployer.rs::deploy_mcp_server",
+        "crates/oac-core/src/deployer.rs::set_kimi_mcp_enabled"
       ],
       "consumers": ["CLI", "Web API", "Tauri IPC", "frontend extension store"]
     },
@@ -120,12 +120,12 @@
       "level": "L2",
       "status": "runtime-verified",
       "card": "modules/store-models.md",
-      "sources": ["crates/hk-core/src/models.rs", "crates/hk-core/src/store.rs"],
+      "sources": ["crates/oac-core/src/models.rs", "crates/oac-core/src/store.rs"],
       "anchors": [
-        "crates/hk-core/src/models.rs::Extension",
-        "crates/hk-core/src/models.rs::ConfigScope",
-        "crates/hk-core/src/store.rs::Store::open",
-        "crates/hk-core/src/store.rs::sync_extensions"
+        "crates/oac-core/src/models.rs::Extension",
+        "crates/oac-core/src/models.rs::ConfigScope",
+        "crates/oac-core/src/store.rs::Store::open",
+        "crates/oac-core/src/store.rs::sync_extensions"
       ],
       "consumers": ["scanner", "manager", "service", "web", "desktop", "CLI"]
     },
@@ -134,11 +134,11 @@
       "level": "L2",
       "status": "runtime-verified",
       "card": "modules/service-install.md",
-      "sources": ["crates/hk-core/src/service.rs", "crates/hk-core/src/kits/*.rs"],
+      "sources": ["crates/oac-core/src/service.rs", "crates/oac-core/src/kits/*.rs"],
       "anchors": [
-        "crates/hk-core/src/service.rs::install_to_agent",
-        "crates/hk-core/src/service.rs::delete_extension",
-        "crates/hk-core/src/kits/service.rs::sync_kit_to_project"
+        "crates/oac-core/src/service.rs::install_to_agent",
+        "crates/oac-core/src/service.rs::delete_extension",
+        "crates/oac-core/src/kits/service.rs::sync_kit_to_project"
       ],
       "consumers": ["Web install handlers", "Tauri install commands", "frontend kits and marketplace"]
     },
@@ -163,12 +163,12 @@
       "level": "L2",
       "status": "runtime-verified",
       "card": "modules/runtime-boundaries.md",
-      "sources": ["crates/hk-web/src/router.rs", "crates/hk-web/src/handlers/extensions.rs", "crates/hk-desktop/src/commands/extensions.rs", "crates/hk-cli/src/main.rs", ".github/workflows/*.yml"],
+      "sources": ["crates/oac-web/src/router.rs", "crates/oac-web/src/handlers/extensions.rs", "crates/oac-desktop/src/commands/extensions.rs", "crates/oac-cli/src/main.rs", ".github/workflows/*.yml"],
       "anchors": [
-        "crates/hk-web/src/router.rs::build_router",
-        "crates/hk-web/src/handlers/extensions.rs::toggle_extension",
-        "crates/hk-desktop/src/commands/extensions.rs::toggle_extension",
-        "crates/hk-cli/src/main.rs::main"
+        "crates/oac-web/src/router.rs::build_router",
+        "crates/oac-web/src/handlers/extensions.rs::toggle_extension",
+        "crates/oac-desktop/src/commands/extensions.rs::toggle_extension",
+        "crates/oac-cli/src/main.rs::main"
       ],
       "consumers": ["web mode", "Tauri desktop", "CLI", "CI and release workflows"]
     },
@@ -177,21 +177,63 @@
       "level": "L2",
       "status": "runtime-verified",
       "card": "modules/app-update-channel.md",
-      "sources": ["src/config/release-channel.json", "src/lib/app-update-policy.ts", "src/stores/update-store.ts", "src/stores/web-update-store.ts", "crates/hk-desktop/src/main.rs", "crates/hk-desktop/tauri.conf.json", "crates/hk-desktop/capabilities/default.json", "scripts/check-release-channel.mjs"],
+      "sources": ["src/config/release-channel.json", "src/lib/app-update-policy.ts", "src/stores/update-store.ts", "src/stores/web-update-store.ts", "crates/oac-desktop/src/main.rs", "crates/oac-desktop/tauri.conf.json", "crates/oac-desktop/capabilities/default.json", "scripts/check-release-channel.mjs"],
       "anchors": [
         "src/lib/app-update-policy.ts::isAppUpdateEnabledForRuntime",
         "src/stores/update-store.ts::checkForUpdate()",
         "src/stores/web-update-store.ts::checkForUpdate(force = false)",
-        "crates/hk-desktop/src/main.rs::app_update_enabled",
+        "crates/oac-desktop/src/main.rs::app_update_enabled",
         "scripts/check-release-channel.mjs::validateReleaseChannel"
       ],
       "consumers": ["frontend app startup", "sidebar", "settings", "Web update store", "Tauri plugin registration", "PR and release workflows"]
+    },
+    {
+      "id": "runtime.identity-migration",
+      "level": "L2",
+      "status": "runtime-verified",
+      "card": "modules/identity-migration.md",
+      "sources": ["crates/oac-core/src/app_paths.rs", "crates/oac-core/src/adapter/codex.rs", "crates/oac-core/src/adapter/kiro.rs", "crates/oac-core/src/deployer.rs", "src/lib/storage.ts", "src/stores/*.ts", "crates/oac-desktop/tauri.conf.json", ".github/workflows/release.yml"],
+      "anchors": [
+        "crates/oac-core/src/app_paths.rs::prepare_data_dir",
+        "crates/oac-core/src/app_paths.rs::open_store",
+        "crates/oac-core/src/deployer.rs::split_dsh_managed_block",
+        "src/lib/storage.ts::readMigratedStorage"
+      ],
+      "consumers": ["CLI", "Web", "Tauri", "frontend stores", "Agent config writers", "release packaging"]
+    },
+    {
+      "id": "core.kits",
+      "level": "L2",
+      "status": "runtime-verified",
+      "card": "modules/kits.md",
+      "sources": ["crates/oac-core/src/kits/*.rs", "crates/oac-core/src/kits/tests/*.rs", "src/pages/kits.tsx"],
+      "anchors": [
+        "crates/oac-core/src/kits/manifest.rs::validate_manifest_paths",
+        "crates/oac-core/src/kits/install_plan.rs::compute_kit_install_plan",
+        "crates/oac-core/src/kits/service.rs::sync_kit_to_project",
+        "crates/oac-core/src/kits/service.rs::import_kit"
+      ],
+      "consumers": ["Kit Web handlers", "Kit Tauri commands", "Kit frontend", "Store"]
+    },
+    {
+      "id": "core.marketplace",
+      "level": "L2",
+      "status": "runtime-verified",
+      "card": "modules/marketplace.md",
+      "sources": ["crates/oac-core/src/marketplace.rs", "crates/oac-core/src/service.rs", "src/pages/overview.tsx", "public/tips.json"],
+      "anchors": [
+        "crates/oac-core/src/marketplace.rs::search_skills_async",
+        "crates/oac-core/src/marketplace.rs::list_cli_registry",
+        "crates/oac-core/src/marketplace.rs::get_embedded_cli_entry",
+        "src/pages/overview.tsx::fetchTips"
+      ],
+      "consumers": ["Marketplace Web handlers", "Marketplace Tauri commands", "Overview", "Install service"]
     }
   ],
   "support_matrix": {
     "registered_agents": ["claude", "codex", "gemini", "cursor", "antigravity", "copilot", "windsurf", "opencode", "hermes", "kimi", "kiro", "omp", "dsh"],
     "planned_agents": [],
-    "registration_source": "crates/hk-core/src/adapter/mod.rs::all_adapters",
+    "registration_source": "crates/oac-core/src/adapter/mod.rs::all_adapters",
     "frontend_order_source": "src/lib/types.ts::AGENT_ORDER",
     "cross_layer_invariant": "adapter order and frontend display order must remain aligned"
   },
@@ -202,7 +244,7 @@
     "frontend_build": "npm run build",
     "frontend_lint": "npm run lint",
     "rust_tests": "cargo test --workspace",
-    "web_dev": "cargo run -p hk-cli -- serve",
+    "web_dev": "cargo run -p oac-cli -- serve",
     "desktop_dev": "cargo tauri dev"
   }
 }

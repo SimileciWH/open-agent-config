@@ -60,7 +60,7 @@ describe("parseError", () => {
     expect(parseError(undefined).kind).toBe("Internal");
   });
 
-  it("does not treat valid JSON without kind/message as HkError", () => {
+  it("does not treat valid JSON without kind/message as OacError", () => {
     const err = parseError('{"error":"something"}');
     // Should fall through to legacy string matching since no kind/message
     expect(err.kind).toBe("Internal");

@@ -166,7 +166,7 @@
     "event_one": "Event",
     "event_other": "Events",
     "revisionTooltip": "Repo commit when installed",
-    "versionUnknownTooltip": "Not installed via HarnessKit; version unknown"
+    "versionUnknownTooltip": "Not installed via Open Agent Config; version unknown"
   },
   "cli": {
     "title": "CLI Details",

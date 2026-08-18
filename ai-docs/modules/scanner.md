@@ -2,16 +2,16 @@
 id: core.scanner
 level: L2
 status: runtime-verified
-verified_commit: 4321a802c021736592ba408b5ff913cff3919053
-last_verified: 2026-08-18
+verified_commit: 6567543deb124c3e871665334b9d972f1aa7c879
+last_verified: 2026-08-19
 source_paths:
-  - crates/hk-core/src/scanner.rs
+  - crates/oac-core/src/scanner.rs
 stable_anchors:
-  - crates/hk-core/src/scanner.rs::scan_all
-  - crates/hk-core/src/scanner.rs::scan_adapter
-  - crates/hk-core/src/scanner.rs::scan_skill_dir
-  - crates/hk-core/src/scanner.rs::scan_mcp_servers
-  - crates/hk-core/src/scanner.rs::skill_locations
+  - crates/oac-core/src/scanner.rs::scan_all
+  - crates/oac-core/src/scanner.rs::scan_adapter
+  - crates/oac-core/src/scanner.rs::scan_skill_dir
+  - crates/oac-core/src/scanner.rs::scan_mcp_servers
+  - crates/oac-core/src/scanner.rs::skill_locations
 known_gaps:
   - Kimi's nearest-project-root precedence is represented by project scope discovery; a future runtime acceptance should verify nested working-directory behavior against the installed CLI.
 ---

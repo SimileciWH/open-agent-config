@@ -31,10 +31,12 @@ vi.mock("@/lib/dialog", () => ({
   saveFilePicker: vi.fn().mockResolvedValue(null),
 }));
 
-const ONBOARDING_KEY = "hk:kits-v4:onboarding-toast-shown";
+const ONBOARDING_KEY = "oac:kits-v4:onboarding-toast-shown";
+const LEGACY_ONBOARDING_KEY = "hk:kits-v4:onboarding-toast-shown";
 
 beforeEach(() => {
   localStorage.removeItem(ONBOARDING_KEY);
+  localStorage.removeItem(LEGACY_ONBOARDING_KEY);
   useKitStore.setState({
     kits: [
       {

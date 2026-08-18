@@ -182,7 +182,7 @@ describe("extensionGroupKey", () => {
 
   it("uses pack as a user-driven tiebreaker for unlinked rows", () => {
     // Real-world case: arxiv-search was deployed to 4 agents but only the
-    // agent that received the original `hk install` carries install_meta.
+    // agent that received the original `oac install` carries install_meta.
     // The other three rows had no source.url, no install_meta, no pack —
     // so they grouped together separately from the codex row. Letting the
     // user type "yorkeccak/scientific-skills" into the pack input on the
@@ -230,8 +230,8 @@ describe("extensionGroupKey", () => {
       pack: null,
       scope: {
         type: "project",
-        name: "hk-scope-test",
-        path: "/Users/zoe/Downloads/hk-scope-test",
+        name: "oac-scope-test",
+        path: "/Users/zoe/Downloads/oac-scope-test",
       },
     };
     const globalCodeReview: Extension = {

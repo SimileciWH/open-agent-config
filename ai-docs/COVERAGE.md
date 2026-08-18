@@ -2,10 +2,10 @@
 
 ## 当前基线
 
-- 源码基线：`4321a802c021736592ba408b5ff913cff3919053`
-- 源码与项目配置文件：336（不含 `ai-docs/` 和根目录 `AGENTS.md`）
-- Rust 文件：89
-- TypeScript/TSX 文件：155
+- 源码基线：`6567543deb124c3e871665334b9d972f1aa7c879`
+- 源码与项目配置文件：341（不含 `ai-docs/` 和根目录 `AGENTS.md`）
+- Rust 文件：90
+- TypeScript/TSX 文件：157
 - CI workflow：4
 - 当前覆盖策略：全仓 L0/L1，Kimi 影响面的 L2-L4
 
@@ -21,14 +21,15 @@
 | `ui.extension-control` | yes | yes | yes | yes | yes | runtime-verified |
 | `runtime.boundaries` | yes | yes | yes | yes | yes | runtime-verified |
 | `runtime.app-update-channel` | yes | yes | yes | yes | yes | runtime-verified |
+| `runtime.identity-migration` | yes | yes | yes | yes | yes | runtime-verified |
+| `core.kits` | yes | yes | yes | yes | yes | runtime-verified |
+| `core.marketplace` | yes | yes | yes | yes | yes | runtime-verified |
 
 ## 已分类但非首批 L2 深卡模块
 
 以下模块已纳入 L1 边界，后续按功能变更补充 L2-L4：
 
 - `core.auditor`：安全审计规则和权限推断。
-- `core.kits`：Kit 清单、压缩包、安装记录和项目同步。
-- `core.marketplace`：Marketplace 搜索、预览和远程元数据。
 - `core.config`：配置路径和应用级配置。
 - `core.sanitize`：路径和输入清理。
 - `core.skills-cli`：外部 skills CLI 集成。
@@ -38,6 +39,8 @@
 本轮新增 Kimi 适配涉及 `core.adapter`、`core.scanner`、`core.manager-deployer`、`core.store-models`、`core.service-install`、`ui.extension-control` 和 `runtime.boundaries`，均已同步到 L2/L3/L4。
 
 应用自身升级隔离涉及 `runtime.app-update-channel` 和 `runtime.boundaries`；默认关闭策略、Tauri 配置和 CI 门禁已同步到 L2-L4。
+
+OAC 身份重构涉及所有运行时 crate、持久化路径、Kit、managed marker、前端存储、Marketplace 来源、视觉资产、Desktop bundle ID 和发布资产；新增的 `runtime.identity-migration`、`core.kits` 与 `core.marketplace` 已同步到 L2-L4。旧身份只作为迁移输入或上游隔离门禁保留。
 
 ## 进入 runtime-verified 的条件
 

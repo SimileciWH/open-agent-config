@@ -1,6 +1,7 @@
 import { Lightbulb, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { readMigratedStorage, writeMigratedStorage } from "@/lib/storage";
 
 interface HintProps {
   id: string;
@@ -10,15 +11,16 @@ interface HintProps {
 
 export function Hint({ id, children, className }: HintProps) {
   const { t } = useTranslation("common");
-  const storageKey = `hk-hint-${id}`;
+  const storageKey = `oac-hint-${id}`;
+  const legacyStorageKey = `hk-hint-${id}`;
   const [visible, setVisible] = useState(
-    () => localStorage.getItem(storageKey) !== "dismissed",
+    () => readMigratedStorage(storageKey, legacyStorageKey) !== "dismissed",
   );
 
   if (!visible) return null;
 
   const dismiss = () => {
-    localStorage.setItem(storageKey, "dismissed");
+    writeMigratedStorage(storageKey, "dismissed", legacyStorageKey);
     setVisible(false);
   };
 

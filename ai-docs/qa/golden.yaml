@@ -1,37 +1,37 @@
 schema_version: 1
-purpose: Verify that an AI can route repository tasks to source-traceable modules before and during Kimi integration.
-baseline_commit: 4321a802c021736592ba408b5ff913cff3919053
+purpose: Verify that an AI can route repository tasks to source-traceable modules across Kimi integration, OAC identity migration, Kit safety, and release isolation.
+baseline_commit: 6567543deb124c3e871665334b9d972f1aa7c879
 cases:
   - id: Q-001
     level: L2
     question: Where is the complete Agent adapter registry and what must match the frontend?
     expected_anchors:
-      - crates/hk-core/src/adapter/mod.rs::all_adapters
+      - crates/oac-core/src/adapter/mod.rs::all_adapters
       - src/lib/types.ts::AGENT_ORDER
     acceptance: The answer names both registries and states that their order must remain aligned.
   - id: Q-002
     level: L2
     question: What is the scan-to-store path for global and project Skills/MCP?
     expected_anchors:
-      - crates/hk-core/src/scanner.rs::scan_all
-      - crates/hk-core/src/scanner.rs::scan_project_extensions
-      - crates/hk-core/src/store.rs::Store::sync_extensions
+      - crates/oac-core/src/scanner.rs::scan_all
+      - crates/oac-core/src/scanner.rs::scan_project_extensions
+      - crates/oac-core/src/store.rs::Store::sync_extensions
     acceptance: The answer distinguishes global and project scope and names the DB reconciliation step.
   - id: Q-003
     level: L3
     question: How does a Skill Enable/Disable operation change the filesystem?
     expected_anchors:
       - src/stores/extension-store.ts::toggle
-      - crates/hk-core/src/manager.rs::toggle_skill
-      - crates/hk-core/src/scanner.rs::skill_locations
+      - crates/oac-core/src/manager.rs::toggle_skill
+      - crates/oac-core/src/scanner.rs::skill_locations
     acceptance: The answer states that the operation renames directory-form SKILL.md/SKILL.md.disabled or flat .md/.md.disabled within the target scope.
   - id: Q-004
     level: L3
     question: How does MCP Disable protect secrets and restore configuration?
     expected_anchors:
-      - crates/hk-core/src/manager.rs::toggle_mcp
-      - crates/hk-core/src/manager.rs::redact_mcp_env
-      - crates/hk-core/src/deployer.rs::restore_mcp_server
+      - crates/oac-core/src/manager.rs::toggle_mcp
+      - crates/oac-core/src/manager.rs::redact_mcp_env
+      - crates/oac-core/src/deployer.rs::restore_mcp_server
     acceptance: The answer distinguishes Kimi/native in-place toggle from redacted DB snapshot and restore.
   - id: Q-005
     level: L3
@@ -45,18 +45,18 @@ cases:
     level: L2
     question: Do Web and Tauri use the same core toggle semantics?
     expected_anchors:
-      - crates/hk-web/src/handlers/extensions.rs::toggle_extension
-      - crates/hk-desktop/src/commands/extensions.rs::toggle_extension
-      - crates/hk-core/src/manager.rs::toggle_extension_with_adapters
+      - crates/oac-web/src/handlers/extensions.rs::toggle_extension
+      - crates/oac-desktop/src/commands/extensions.rs::toggle_extension
+      - crates/oac-core/src/manager.rs::toggle_extension_with_adapters
     acceptance: The answer identifies shared core semantics and different transport wrappers.
   - id: Q-007
     level: L3
     question: What must be updated when adding Kimi Code?
     expected_anchors:
-      - crates/hk-core/src/adapter/mod.rs::AgentAdapter
-      - crates/hk-core/src/adapter/mod.rs::all_adapters
+      - crates/oac-core/src/adapter/mod.rs::AgentAdapter
+      - crates/oac-core/src/adapter/mod.rs::all_adapters
       - src/lib/types.ts::AGENT_ORDER
-      - crates/hk-core/src/manager.rs::toggle_mcp
+      - crates/oac-core/src/manager.rs::toggle_mcp
     acceptance: The answer confirms adapter, registration, frontend order, capability, Kimi MCP writer, tests, and synchronized L0-L4 cards.
   - id: Q-008
     level: L4
@@ -70,15 +70,39 @@ cases:
     level: L3
     question: What are Kimi Code's MCP paths, transport spellings, and advanced-field policy?
     expected_anchors:
-      - crates/hk-core/src/adapter/kimi.rs::KimiAdapter
-      - crates/hk-core/src/deployer.rs::set_kimi_mcp_enabled
-      - crates/hk-core/src/adapter/mod.rs::RemoteMcpSchema
+      - crates/oac-core/src/adapter/kimi.rs::KimiAdapter
+      - crates/oac-core/src/deployer.rs::set_kimi_mcp_enabled
+      - crates/oac-core/src/adapter/mod.rs::RemoteMcpSchema
     acceptance: The answer names KIMI_CODE_HOME/default paths, project override, url versus transport=sse, native enabled, and explicit handling of advanced fields.
   - id: Q-010
     level: L4
-    question: How is application self-update prevented from following the upstream HarnessKit release channel, and what is required to enable it?
+    question: How is application self-update prevented from following the legacy upstream release channel, and what is required to enable it?
     expected_anchors:
       - src/lib/app-update-policy.ts::isAppUpdateEnabledForRuntime
-      - crates/hk-desktop/src/main.rs::app_update_enabled
+      - crates/oac-desktop/src/main.rs::app_update_enabled
       - scripts/check-release-channel.mjs::validateReleaseChannel
     acceptance: The answer distinguishes application updates from extension updates, confirms the disabled Web/Tauri gates, and requires the fork's own HTTPS feed, signing key, capabilities, artifacts, CI check, and cross-platform canary before enablement.
+  - id: Q-011
+    level: L3
+    question: How does OAC migrate old persistent identity without creating split-brain state?
+    expected_anchors:
+      - crates/oac-core/src/app_paths.rs::prepare_data_dir
+      - crates/oac-core/src/app_paths.rs::open_store
+      - src/lib/storage.ts::readMigratedStorage
+    acceptance: The answer names the migration lock, atomic directory move, symlink and dual-state rejection, Kit and Kiro repair, central runtime entrypoint, and OAC-only new writes.
+  - id: Q-012
+    level: L4
+    question: How are malicious Kit manifest paths prevented from escaping a project?
+    expected_anchors:
+      - crates/oac-core/src/kits/manifest.rs::validate_manifest_paths
+      - crates/oac-core/src/kits/install_plan.rs::compute_kit_install_plan
+      - crates/oac-core/src/kits/service.rs::sync_kit_to_project
+    acceptance: The answer covers ZIP entry validation, single-component manifest fields, final project-root validation, repeated validation at I/O boundaries, regression tests, and the remaining ZIP resource-limit gap.
+  - id: Q-013
+    level: L3
+    question: Which Marketplace sources may OAC use for CLI listings, execution, and Overview tips?
+    expected_anchors:
+      - crates/oac-core/src/marketplace.rs::list_cli_registry
+      - crates/oac-core/src/marketplace.rs::get_embedded_cli_entry
+      - src/pages/overview.tsx::fetchTips
+    acceptance: The answer states that CLI listing and execution share the embedded registry, tips are same-origin, and any future remote registry needs OAC ownership and integrity controls.

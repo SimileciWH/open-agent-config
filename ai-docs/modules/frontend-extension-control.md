@@ -2,14 +2,15 @@
 id: ui.extension-control
 level: L2
 status: runtime-verified
-verified_commit: 4321a802c021736592ba408b5ff913cff3919053
-last_verified: 2026-08-18
+verified_commit: 6567543deb124c3e871665334b9d972f1aa7c879
+last_verified: 2026-08-19
 source_paths:
   - src/stores/extension-store.ts
   - src/stores/extension-helpers.ts
   - src/lib/invoke.ts
   - src/lib/transport.ts
   - src/lib/types.ts
+  - src/lib/storage.ts
   - src/components/agents/__tests__/memory-grouping.test.ts
   - src/components/extensions/extension-table.tsx
   - src/components/shared/agent-card.tsx
@@ -25,6 +26,7 @@ stable_anchors:
   - src/lib/transport.ts::transport
   - src/lib/types.ts::AGENT_ORDER
   - src/lib/agent-capabilities.ts::canInstallAtScope
+  - src/lib/storage.ts::readMigratedStorage
 known_gaps:
   - Kimi does not yet have a dedicated visual browser acceptance screenshot; the component is covered by the production TypeScript build.
 ---

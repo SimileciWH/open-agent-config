@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { annotate } from "rough-notation";
 import { AgentMascot } from "@/components/shared/agent-mascot/agent-mascot";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
+import { readMigratedStorage, writeMigratedStorage } from "@/lib/storage";
 import { AGENT_ORDER, agentDisplayName } from "@/lib/types";
 
 /* ══════════════════════════════════════════════════════
@@ -19,14 +20,15 @@ import { AGENT_ORDER, agentDisplayName } from "@/lib/types";
    ══════════════════════════════════════════════════════ */
 
 const INTERACTIVE = "a, button, input, select, textarea, [role='button']";
-const ONBOARDING_KEY = "hk-onboarding-completed";
+const ONBOARDING_KEY = "oac-onboarding-completed";
+const LEGACY_ONBOARDING_KEY = "hk-onboarding-completed";
 
 export function useOnboarding() {
   const [show, setShow] = useState(
-    () => localStorage.getItem(ONBOARDING_KEY) !== "done",
+    () => readMigratedStorage(ONBOARDING_KEY, LEGACY_ONBOARDING_KEY) !== "done",
   );
   const complete = () => {
-    localStorage.setItem(ONBOARDING_KEY, "done");
+    writeMigratedStorage(ONBOARDING_KEY, "done", LEGACY_ONBOARDING_KEY);
     setShow(false);
   };
   return { show, complete };
@@ -366,7 +368,7 @@ function StepWelcome() {
       </div>
 
       <h1 className="font-serif text-[44px] font-semibold tracking-tight leading-[1.1] text-foreground">
-        Welcome to <span style={shimmerStyle}>HarnessKit</span>
+        Welcome to <span style={shimmerStyle}>Open Agent Config</span>
       </h1>
       <p className="mt-3 text-[15px] font-medium text-primary/70">
         One home for every agent
@@ -383,7 +385,7 @@ function StepWelcome() {
         </HandAnnotation>
         .
         <br />
-        HarnessKit brings them all{" "}
+        Open Agent Config brings them all{" "}
         <span style={shimmerStyle}>under one roof</span>.
       </p>
     </div>

@@ -27,7 +27,7 @@ sed -i '' "s/\"version\": \".*\"/\"version\": \"${VERSION}\"/" "$ROOT/package.js
 echo "    Updated package.json"
 
 # 3. tauri.conf.json
-sed -i '' "s/\"version\": \".*\"/\"version\": \"${VERSION}\"/" "$ROOT/crates/hk-desktop/tauri.conf.json"
+sed -i '' "s/\"version\": \".*\"/\"version\": \"${VERSION}\"/" "$ROOT/crates/oac-desktop/tauri.conf.json"
 echo "    Updated tauri.conf.json"
 
 # 4. Cargo.lock — run cargo check to sync workspace crate versions

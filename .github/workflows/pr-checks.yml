@@ -29,6 +29,9 @@ jobs:
       - name: Validate release channel
         run: npm run check:release-channel
 
+      - name: Validate OAC identity
+        run: npm run check:oac-identity
+
       - name: Frontend tests
         run: npm test
 

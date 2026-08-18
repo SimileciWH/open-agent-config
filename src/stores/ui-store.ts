@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { readMigratedStorage, writeMigratedStorage } from "@/lib/storage";
 
 export type ThemeName = "tiesen" | "claude";
 export type Mode = "system" | "dark" | "light";
@@ -11,11 +12,12 @@ export type AgentVisibility = "all" | "detected";
  */
 function getValidItem<T extends string>(
   key: string,
+  legacyKey: string,
   allowed: readonly T[],
   fallback: T,
 ): T {
   if (typeof localStorage === "undefined") return fallback;
-  const val = localStorage.getItem(key);
+  const val = readMigratedStorage(key, legacyKey);
   return val && (allowed as readonly string[]).includes(val)
     ? (val as T)
     : fallback;
@@ -25,10 +27,10 @@ function getValidItem<T extends string>(
  * Reads a JSON string array from localStorage, falling back to an empty array
  * if storage is unavailable, missing, or malformed.
  */
-function getStoredStringArray(key: string): string[] {
+function getStoredStringArray(key: string, legacyKey: string): string[] {
   if (typeof localStorage === "undefined") return [];
   try {
-    const raw = localStorage.getItem(key);
+    const raw = readMigratedStorage(key, legacyKey);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) && parsed.every((v) => typeof v === "string")
@@ -67,19 +69,34 @@ const ALLOWED_AGENT_VISIBILITY: readonly AgentVisibility[] = [
   "detected",
 ];
 
-const storedMode = getValidItem("hk-theme", ALLOWED_MODES, "system");
+const storedMode = getValidItem(
+  "oac-theme",
+  "hk-theme",
+  ALLOWED_MODES,
+  "system",
+);
 const storedThemeName = getValidItem(
+  "oac-theme-name",
   "hk-theme-name",
   ALLOWED_THEME_NAMES,
   "tiesen",
 );
-const storedAppIcon = getValidItem("hk-app-icon", ALLOWED_APP_ICONS, "icon-1");
+const storedAppIcon = getValidItem(
+  "oac-app-icon",
+  "hk-app-icon",
+  ALLOWED_APP_ICONS,
+  "icon-1",
+);
 const storedAgentVisibility = getValidItem(
+  "oac-agent-visibility",
   "hk-agent-visibility",
   ALLOWED_AGENT_VISIBILITY,
   "all",
 );
-const storedAutoDisabledAgents = getStoredStringArray("hk-agent-auto-disabled");
+const storedAutoDisabledAgents = getStoredStringArray(
+  "oac-agent-auto-disabled",
+  "hk-agent-auto-disabled",
+);
 
 /** Resolve "system" to actual light/dark based on OS preference */
 export function resolveMode(mode: Mode): "dark" | "light" {
@@ -100,25 +117,30 @@ export const useUIStore = create<UIState>((set) => ({
     set((s) => ({ sidebarOpen: !s.sidebarOpen }));
   },
   setThemeName(themeName) {
-    localStorage.setItem("hk-theme-name", themeName);
+    writeMigratedStorage("oac-theme-name", themeName, "hk-theme-name");
     set({ themeName });
   },
   setMode(mode) {
-    localStorage.setItem("hk-theme", mode);
+    writeMigratedStorage("oac-theme", mode, "hk-theme");
     set({ mode });
   },
   setAppIcon(appIcon) {
-    localStorage.setItem("hk-app-icon", appIcon);
+    writeMigratedStorage("oac-app-icon", appIcon, "hk-app-icon");
     set({ appIcon });
   },
   setAgentVisibility(agentVisibility) {
-    localStorage.setItem("hk-agent-visibility", agentVisibility);
+    writeMigratedStorage(
+      "oac-agent-visibility",
+      agentVisibility,
+      "hk-agent-visibility",
+    );
     set({ agentVisibility });
   },
   setAutoDisabledAgents(autoDisabledAgents) {
-    localStorage.setItem(
-      "hk-agent-auto-disabled",
+    writeMigratedStorage(
+      "oac-agent-auto-disabled",
       JSON.stringify(autoDisabledAgents),
+      "hk-agent-auto-disabled",
     );
     set({ autoDisabledAgents });
   },

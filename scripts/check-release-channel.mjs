@@ -9,6 +9,10 @@ function readJson(path) {
   return JSON.parse(readFileSync(resolve(root, path), "utf8"));
 }
 
+function readText(path) {
+  return readFileSync(resolve(root, path), "utf8");
+}
+
 function fail(message) {
   failures.push(message);
 }
@@ -25,11 +29,15 @@ function isHttpsUrl(value) {
 const policy = readJson("src/config/release-channel.json");
 
 function validateReleaseChannel() {
-  const tauri = readJson("crates/hk-desktop/tauri.conf.json");
-  const capabilities = readJson("crates/hk-desktop/capabilities/default.json");
+  const tauri = readJson("crates/oac-desktop/tauri.conf.json");
+  const capabilities = readJson("crates/oac-desktop/capabilities/default.json");
   const updater = tauri.plugins?.updater;
   const updaterEndpoints = updater?.endpoints ?? [];
   const permissions = capabilities.permissions ?? [];
+
+  if (tauri.identifier !== "com.openagentconfig.app") {
+    fail("Tauri identifier must use the OAC application identity");
+  }
 
   if (policy.enabled) {
     if (!isHttpsUrl(policy.webReleaseApiUrl)) {
@@ -87,6 +95,18 @@ function validateReleaseChannel() {
     )
   ) {
     fail("fork release channel must not point to RealZST/HarnessKit");
+  }
+
+  for (const path of ["install.sh", "install.ps1"]) {
+    const installer = readText(path);
+    if (/realzst\/harnesskit/i.test(installer)) {
+      fail(`${path} must not download from the legacy upstream repository`);
+    }
+  }
+
+  const releaseWorkflow = readText(".github/workflows/release.yml");
+  if (/release\/hk(?:\.exe)?\b|\bhk-(?:macos|linux|windows)/i.test(releaseWorkflow)) {
+    fail("release workflow must publish the oac binary and OAC-named assets");
   }
 }
 

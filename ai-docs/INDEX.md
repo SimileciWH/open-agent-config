@@ -4,15 +4,18 @@
 
 | 任务 | 首选文档 | 关键源码入口 |
 | --- | --- | --- |
-| 新增 Agent | `playbooks/add-agent.md` | `crates/hk-core/src/adapter/mod.rs::AgentAdapter` |
-| 扫描 Skills/MCP | `modules/scanner.md` | `crates/hk-core/src/scanner.rs::scan_all` |
-| Skills 开关 | `playbooks/skills-toggle.md` | `crates/hk-core/src/manager.rs::toggle_skill` |
-| MCP 开关 | `playbooks/mcp-toggle.md` | `crates/hk-core/src/manager.rs::toggle_mcp` |
-| MCP 部署/恢复 | `modules/manager-deployer.md` | `crates/hk-core/src/deployer.rs::deploy_mcp_server` |
+| 新增 Agent | `playbooks/add-agent.md` | `crates/oac-core/src/adapter/mod.rs::AgentAdapter` |
+| 扫描 Skills/MCP | `modules/scanner.md` | `crates/oac-core/src/scanner.rs::scan_all` |
+| Skills 开关 | `playbooks/skills-toggle.md` | `crates/oac-core/src/manager.rs::toggle_skill` |
+| MCP 开关 | `playbooks/mcp-toggle.md` | `crates/oac-core/src/manager.rs::toggle_mcp` |
+| MCP 部署/恢复 | `modules/manager-deployer.md` | `crates/oac-core/src/deployer.rs::deploy_mcp_server` |
 | UI 跨 Agent 分组控制 | `modules/frontend-extension-control.md` | `src/stores/extension-store.ts::toggle` |
-| Web/Tauri/CLI 行为差异 | `modules/runtime-boundaries.md` | `crates/hk-web/src/router.rs::build_router` |
-| 数据库和扫描同步 | `modules/store-models.md` | `crates/hk-core/src/store.rs::Store::sync_extensions` |
-| 安装和能力门控 | `modules/service-install.md` | `crates/hk-core/src/service.rs::install_to_agent` |
+| Web/Tauri/CLI 行为差异 | `modules/runtime-boundaries.md` | `crates/oac-web/src/router.rs::build_router` |
+| 数据库和扫描同步 | `modules/store-models.md` | `crates/oac-core/src/store.rs::Store::sync_extensions` |
+| OAC 身份与旧数据迁移 | `modules/identity-migration.md` | `crates/oac-core/src/app_paths.rs::open_store` |
+| Kit 导入、同步与路径安全 | `modules/kits.md` | `crates/oac-core/src/kits/manifest.rs::validate_manifest_paths` |
+| Marketplace 来源策略 | `modules/marketplace.md` | `crates/oac-core/src/marketplace.rs::list_cli_registry` |
+| 安装和能力门控 | `modules/service-install.md` | `crates/oac-core/src/service.rs::install_to_agent` |
 | 应用自身升级/发布通道 | `modules/app-update-channel.md` | `src/lib/app-update-policy.ts::isAppUpdateEnabledForRuntime` |
 | 最终验证 | `playbooks/verification.md` | `.github/workflows/pr-checks.yml` |
 
@@ -40,6 +43,9 @@
 - [`modules/frontend-extension-control.md`](modules/frontend-extension-control.md)
 - [`modules/runtime-boundaries.md`](modules/runtime-boundaries.md)
 - [`modules/app-update-channel.md`](modules/app-update-channel.md)
+- [`modules/identity-migration.md`](modules/identity-migration.md)
+- [`modules/kits.md`](modules/kits.md)
+- [`modules/marketplace.md`](modules/marketplace.md)
 
 ### L3
 
@@ -49,6 +55,9 @@
 - [`playbooks/cross-agent-sync.md`](playbooks/cross-agent-sync.md)
 - [`playbooks/verification.md`](playbooks/verification.md)
 - [`playbooks/app-update-channel.md`](playbooks/app-update-channel.md)
+- [`playbooks/identity-migration.md`](playbooks/identity-migration.md)
+- [`playbooks/kit-import-security.md`](playbooks/kit-import-security.md)
+- [`playbooks/marketplace-sources.md`](playbooks/marketplace-sources.md)
 
 ### L4
 

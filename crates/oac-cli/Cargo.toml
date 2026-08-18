@@ -1,0 +1,24 @@
+[package]
+name = "oac-cli"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "oac"
+path = "src/main.rs"
+
+[dependencies]
+oac-core = { path = "../oac-core" }
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+clap = { version = "4", features = ["derive"] }
+comfy-table = "7"
+colored = "3"
+dirs = "6"
+oac-web = { path = "../oac-web" }
+tokio = { version = "1", features = ["full"] }
+rand = "0.9"
+
+[dev-dependencies]
+tempfile = "3"

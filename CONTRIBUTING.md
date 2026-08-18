@@ -1,8 +1,8 @@
-# Contributing to HarnessKit
+# Contributing to Open Agent Config
 
 Thanks for your interest in contributing!
 
-HarnessKit is a Cargo workspace containing four Rust crates and a React + Vite frontend in `src/`. The desktop app is packaged with [Tauri](https://tauri.app/); the CLI embeds the built frontend via [rust-embed](https://crates.io/crates/rust-embed) to serve it in web mode.
+Open Agent Config is a Cargo workspace containing four Rust crates and a React + Vite frontend in `src/`. The desktop app is packaged with [Tauri](https://tauri.app/); the CLI embeds the built frontend via [rust-embed](https://crates.io/crates/rust-embed) to serve it in web mode.
 
 ## Prerequisites
 
@@ -16,8 +16,8 @@ This project uses **npm**, not pnpm or yarn.
 ## Getting Started
 
 ```bash
-git clone https://github.com/RealZST/HarnessKit.git
-cd HarnessKit
+git clone https://github.com/SimileciWH/open-agent-config.git
+cd open-agent-config
 npm ci
 ```
 
@@ -32,7 +32,7 @@ Two terminals — Vite dev server + Rust backend:
 npm run dev                                  # http://localhost:1420 (HMR)
 
 # Terminal B
-cargo run -p hk-cli -- serve                 # http://127.0.0.1:7070
+cargo run -p oac-cli -- serve                 # http://127.0.0.1:7070
 ```
 
 Open `http://localhost:1420` in your browser. Vite proxies `/api/*` requests to the backend at `:7070`.
@@ -53,23 +53,23 @@ Tauri automatically runs `npm run dev` as a before-dev command and launches the 
 ./build.sh
 ```
 
-Produces `.dmg` bundles for Apple Silicon and Intel, plus `hk` CLI binaries.
+Produces `.dmg` bundles for Apple Silicon and Intel, plus `oac` CLI binaries.
 
 ### CLI only (any platform)
 
 ```bash
 npm run build                          # produce dist/ for rust-embed
-cargo build --release -p hk-cli        # produces target/release/hk
+cargo build --release -p oac-cli        # produces target/release/oac
 ```
 
 ## Project Layout
 
 ```
 crates/
-├── hk-core/         Shared core: scanning, models, DB, agent adapters
-├── hk-desktop/      Tauri desktop app (wraps hk-core + frontend)
-├── hk-cli/          CLI binary (hk); includes `hk serve` for web mode
-└── hk-web/          HTTP layer for web mode (embedded into hk-cli via rust-embed)
+├── oac-core/         Shared core: scanning, models, DB, agent adapters
+├── oac-desktop/      Tauri desktop app (wraps oac-core + frontend)
+├── oac-cli/          CLI binary (oac); includes `oac serve` for web mode
+└── oac-web/          HTTP layer for web mode (embedded into oac-cli via rust-embed)
 
 src/                 React frontend (shared by desktop app and web mode)
 ├── pages/           Route pages (Overview, Kits, Agents, Extensions, Marketplace, Audit, Settings)

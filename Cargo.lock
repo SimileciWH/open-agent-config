@@ -1922,103 +1922,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
-name = "hk-cli"
-version = "1.8.2"
-dependencies = [
- "anyhow",
- "clap",
- "colored",
- "comfy-table",
- "dirs",
- "hk-core",
- "hk-web",
- "rand 0.9.4",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
-]
-
-[[package]]
-name = "hk-core"
-version = "1.8.2"
-dependencies = [
- "anyhow",
- "chrono",
- "dirs",
- "fs2",
- "glob",
- "jsonc-parser",
- "lru",
- "notify",
- "openssl-sys",
- "parking_lot",
- "regex",
- "reqwest 0.12.28",
- "rusqlite",
- "semver",
- "serde",
- "serde_json",
- "serde_yaml",
- "serial_test",
- "sha2",
- "tempfile",
- "tokio",
- "toml 0.8.23",
- "uuid",
- "walkdir",
- "zip 2.4.2",
-]
-
-[[package]]
-name = "hk-desktop"
-version = "1.8.2"
-dependencies = [
- "anyhow",
- "chrono",
- "dirs",
- "hk-core",
- "objc2",
- "objc2-app-kit",
- "objc2-foundation",
- "parking_lot",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-opener",
- "tauri-plugin-process",
- "tauri-plugin-updater",
- "tempfile",
- "uuid",
-]
-
-[[package]]
-name = "hk-web"
-version = "1.8.2"
-dependencies = [
- "anyhow",
- "axum",
- "chrono",
- "dirs",
- "gethostname",
- "hk-core",
- "local-ip-address",
- "mime_guess",
- "parking_lot",
- "rand 0.9.4",
- "rust-embed",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
- "tower",
- "tower-http",
- "uuid",
-]
-
-[[package]]
 name = "html5ever"
 version = "0.29.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2986,6 +2889,103 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.117",
+]
+
+[[package]]
+name = "oac-cli"
+version = "1.8.2"
+dependencies = [
+ "anyhow",
+ "clap",
+ "colored",
+ "comfy-table",
+ "dirs",
+ "oac-core",
+ "oac-web",
+ "rand 0.9.4",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+]
+
+[[package]]
+name = "oac-core"
+version = "1.8.2"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "dirs",
+ "fs2",
+ "glob",
+ "jsonc-parser",
+ "lru",
+ "notify",
+ "openssl-sys",
+ "parking_lot",
+ "regex",
+ "reqwest 0.12.28",
+ "rusqlite",
+ "semver",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "serial_test",
+ "sha2",
+ "tempfile",
+ "tokio",
+ "toml 0.8.23",
+ "uuid",
+ "walkdir",
+ "zip 2.4.2",
+]
+
+[[package]]
+name = "oac-desktop"
+version = "1.8.2"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "dirs",
+ "oac-core",
+ "objc2",
+ "objc2-app-kit",
+ "objc2-foundation",
+ "parking_lot",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-opener",
+ "tauri-plugin-process",
+ "tauri-plugin-updater",
+ "tempfile",
+ "uuid",
+]
+
+[[package]]
+name = "oac-web"
+version = "1.8.2"
+dependencies = [
+ "anyhow",
+ "axum",
+ "chrono",
+ "dirs",
+ "gethostname",
+ "local-ip-address",
+ "mime_guess",
+ "oac-core",
+ "parking_lot",
+ "rand 0.9.4",
+ "rust-embed",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tower",
+ "tower-http",
+ "uuid",
 ]
 
 [[package]]

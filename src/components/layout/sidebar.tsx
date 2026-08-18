@@ -83,7 +83,7 @@ export function Sidebar() {
 
       <div className="mb-6 px-3">
         <h1 className="text-lg font-bold tracking-tight text-sidebar-foreground">
-          HarnessKit
+          Open Agent Config
         </h1>
         {serverInfo?.nodeName && (
           <p

@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const RELEASES_URL =
   "https://updates.example.test/open-agent-config/releases/latest";
-const CACHE_KEY = "hk-web-update-cache";
-const DISMISS_KEY_PREFIX = "hk-update-dismissed-v";
+const CACHE_KEY = "oac-web-update-cache";
+const DISMISS_KEY_PREFIX = "oac-update-dismissed-v";
 
 vi.mock("@/config/release-channel.json", () => ({
   default: {

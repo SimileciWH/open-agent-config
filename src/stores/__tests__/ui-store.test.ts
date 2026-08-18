@@ -17,7 +17,7 @@ describe("ui-store localStorage validation", () => {
     expect(state.autoDisabledAgents).toEqual([]);
   });
 
-  it("reads valid localStorage values", async () => {
+  it("migrates valid legacy localStorage values", async () => {
     localStorage.setItem("hk-theme", "dark");
     localStorage.setItem("hk-theme-name", "claude");
     localStorage.setItem("hk-app-icon", "icon-2");
@@ -34,6 +34,8 @@ describe("ui-store localStorage validation", () => {
     expect(state.appIcon).toBe("icon-2");
     expect(state.agentVisibility).toBe("detected");
     expect(state.autoDisabledAgents).toEqual(["cursor", "gemini"]);
+    expect(localStorage.getItem("oac-theme")).toBe("dark");
+    expect(localStorage.getItem("hk-theme")).toBeNull();
   });
 
   it("ignores invalid localStorage values and falls back to defaults", async () => {
@@ -65,14 +67,14 @@ describe("ui-store localStorage validation", () => {
   it("setMode persists to localStorage", async () => {
     const { useUIStore } = await import("../ui-store");
     useUIStore.getState().setMode("dark");
-    expect(localStorage.getItem("hk-theme")).toBe("dark");
+    expect(localStorage.getItem("oac-theme")).toBe("dark");
     expect(useUIStore.getState().mode).toBe("dark");
   });
 
   it("setThemeName persists to localStorage", async () => {
     const { useUIStore } = await import("../ui-store");
     useUIStore.getState().setThemeName("claude");
-    expect(localStorage.getItem("hk-theme-name")).toBe("claude");
+    expect(localStorage.getItem("oac-theme-name")).toBe("claude");
     expect(useUIStore.getState().themeName).toBe("claude");
   });
 
@@ -88,14 +90,14 @@ describe("ui-store localStorage validation", () => {
   it("setAgentVisibility persists to localStorage", async () => {
     const { useUIStore } = await import("../ui-store");
     useUIStore.getState().setAgentVisibility("detected");
-    expect(localStorage.getItem("hk-agent-visibility")).toBe("detected");
+    expect(localStorage.getItem("oac-agent-visibility")).toBe("detected");
     expect(useUIStore.getState().agentVisibility).toBe("detected");
   });
 
   it("setAutoDisabledAgents persists the snapshot as JSON", async () => {
     const { useUIStore } = await import("../ui-store");
     useUIStore.getState().setAutoDisabledAgents(["cursor", "gemini"]);
-    expect(localStorage.getItem("hk-agent-auto-disabled")).toBe(
+    expect(localStorage.getItem("oac-agent-auto-disabled")).toBe(
       JSON.stringify(["cursor", "gemini"]),
     );
     expect(useUIStore.getState().autoDisabledAgents).toEqual([
@@ -104,7 +106,7 @@ describe("ui-store localStorage validation", () => {
     ]);
 
     useUIStore.getState().setAutoDisabledAgents([]);
-    expect(localStorage.getItem("hk-agent-auto-disabled")).toBe("[]");
+    expect(localStorage.getItem("oac-agent-auto-disabled")).toBe("[]");
     expect(useUIStore.getState().autoDisabledAgents).toEqual([]);
   });
 });

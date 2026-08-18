@@ -1,5 +1,5 @@
 {
-  "name": "harnesskit-frontend",
+  "name": "open-agent-config-frontend",
   "private": true,
   "version": "1.8.2",
   "description": "Cross-platform extension management for AI coding agents",
@@ -14,6 +14,7 @@
     "lint": "biome check src/",
     "lint:fix": "biome check --fix src/",
     "check:ai-docs": "node scripts/check-ai-docs.mjs",
+    "check:oac-identity": "node scripts/check-oac-identity.mjs",
     "check:release-channel": "node scripts/check-release-channel.mjs"
   },
   "engines": {
@@ -33,7 +34,6 @@
     "clsx": "^2.1.0",
     "i18next": "^26.1.0",
     "lucide-react": "^1.7.0",
-    "puppeteer": "^24.41.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-i18next": "^17.0.7",

@@ -1,16 +1,16 @@
-import type { HkError, HkErrorKind } from "./error-types";
+import type { OacError, OacErrorKind } from "./error-types";
 import { parseError } from "./error-types";
 
 /**
  * Converts a raw backend error into a user-friendly message.
  *
- * Accepts any error shape — strings (HTTP transport), HkError objects (Tauri
+ * Accepts any error shape — strings (HTTP transport), OacError objects (Tauri
  * IPC reject value), Error instances, or anything else. Routes everything
  * through `parseError` so callers don't have to wrap errors in `String()`
- * (which produces `"[object Object]"` for Tauri's reified HkError objects).
+ * (which produces `"[object Object]"` for Tauri's reified OacError objects).
  */
 export function humanizeError(raw: unknown): string {
-  const err: HkError = parseError(raw);
+  const err: OacError = parseError(raw);
 
   // Kind-based routing for typed errors
   const kindMessage = humanizeByKind(err.kind, err.message);
@@ -20,7 +20,7 @@ export function humanizeError(raw: unknown): string {
   return humanizeByMessage(err.message);
 }
 
-function humanizeByKind(kind: HkErrorKind, message: string): string | null {
+function humanizeByKind(kind: OacErrorKind, message: string): string | null {
   switch (kind) {
     case "Network":
       return "Could not connect. Check your internet connection and try again.";
@@ -28,7 +28,7 @@ function humanizeByKind(kind: HkErrorKind, message: string): string | null {
       return `Not found: ${truncate(message, 100)}`;
     case "PermissionDenied":
       // Pass through verbatim. PermissionDenied covers both filesystem perms
-      // (io::Error) and HK web token auth — the previous git-flavored
+      // (io::Error) and OAC web token auth — the previous git-flavored
       // "repository may be private" message was misleading in both cases.
       return truncate(message, 120);
     case "PathNotAllowed":

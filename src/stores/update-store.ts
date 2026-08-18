@@ -2,6 +2,7 @@ import { relaunch } from "@tauri-apps/plugin-process";
 import { check } from "@tauri-apps/plugin-updater";
 import { create } from "zustand";
 import { isAppUpdateEnabledForRuntime } from "@/lib/app-update-policy";
+import { readMigratedStorage, writeMigratedStorage } from "@/lib/storage";
 
 /** Clean up GitHub auto-generated release notes for in-app display.
  *  - Removes "New Contributors" and "Full Changelog" sections
@@ -35,7 +36,8 @@ export function cleanChangelog(body: string): string {
 
 /** localStorage key prefix for "user has dismissed the update reminder for this version".
  *  Shared between desktop and web update flows so a dismissal in either mode silences both. */
-export const DISMISS_KEY_PREFIX = "hk-update-dismissed-v";
+export const DISMISS_KEY_PREFIX = "oac-update-dismissed-v";
+export const LEGACY_DISMISS_KEY_PREFIX = "hk-update-dismissed-v";
 
 const MIN_UPDATE_CHECK_VISIBLE_MS = 600;
 
@@ -75,8 +77,10 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
       const update = await check();
       if (update) {
         const dismissed =
-          localStorage.getItem(`${DISMISS_KEY_PREFIX}${update.version}`) ===
-          "1";
+          readMigratedStorage(
+            `${DISMISS_KEY_PREFIX}${update.version}`,
+            `${LEGACY_DISMISS_KEY_PREFIX}${update.version}`,
+          ) === "1";
         set({
           available: {
             version: update.version,
@@ -110,7 +114,11 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
     const { available } = get();
     if (!available) return;
     try {
-      localStorage.setItem(`${DISMISS_KEY_PREFIX}${available.version}`, "1");
+      writeMigratedStorage(
+        `${DISMISS_KEY_PREFIX}${available.version}`,
+        "1",
+        `${LEGACY_DISMISS_KEY_PREFIX}${available.version}`,
+      );
     } catch {
       // localStorage unavailable — keep the in-memory dismissal anyway
     }

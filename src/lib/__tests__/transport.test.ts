@@ -14,7 +14,7 @@ describe("consumeUrlToken", () => {
     consumeUrlToken();
 
     expect(getAuthToken()).toBe("abc123");
-    expect(localStorage.getItem("hk_token")).toBe("abc123");
+    expect(localStorage.getItem("oac_token")).toBe("abc123");
     expect(window.location.search).toBe("");
   });
 
@@ -23,7 +23,7 @@ describe("consumeUrlToken", () => {
 
     consumeUrlToken();
 
-    expect(localStorage.getItem("hk_token")).toBe("abc123");
+    expect(localStorage.getItem("oac_token")).toBe("abc123");
     expect(window.location.search).toBe("?scope=all");
   });
 
@@ -32,7 +32,7 @@ describe("consumeUrlToken", () => {
 
     consumeUrlToken();
 
-    expect(localStorage.getItem("hk_token")).toBeNull();
+    expect(localStorage.getItem("oac_token")).toBeNull();
     expect(window.location.search).toBe("?scope=all");
   });
 });
