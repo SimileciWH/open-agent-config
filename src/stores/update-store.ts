@@ -1,6 +1,7 @@
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check } from "@tauri-apps/plugin-updater";
 import { create } from "zustand";
+import { isAppUpdateEnabledForRuntime } from "@/lib/app-update-policy";
 
 /** Clean up GitHub auto-generated release notes for in-app display.
  *  - Removes "New Contributors" and "Full Changelog" sections
@@ -67,7 +68,7 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
   dismissed: false,
 
   async checkForUpdate() {
-    if (get().checking) return;
+    if (!isAppUpdateEnabledForRuntime(true) || get().checking) return;
     const startedAt = Date.now();
     set({ checking: true });
     try {
@@ -96,7 +97,7 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
   },
 
   promptUpdate() {
-    if (get().available) {
+    if (isAppUpdateEnabledForRuntime(true) && get().available) {
       set({ showChangelog: true });
     }
   },
@@ -117,7 +118,7 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
   },
 
   async confirmUpdate() {
-    if (get().installing) return;
+    if (!isAppUpdateEnabledForRuntime(true) || get().installing) return;
     set({ installing: true, showChangelog: false });
     try {
       const update = await check();

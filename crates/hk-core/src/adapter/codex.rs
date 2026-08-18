@@ -280,6 +280,7 @@ impl AgentAdapter for CodexAdapter {
                     transport,
                     url,
                     headers: toml_string_map(table, "http_headers"),
+                    extra: Default::default(),
                     // Codex's TOML schema has no agent-native disable concept.
                     enabled: true,
                 }

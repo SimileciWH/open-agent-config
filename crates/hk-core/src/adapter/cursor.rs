@@ -108,6 +108,7 @@ impl AgentAdapter for CursorAdapter {
                     transport,
                     url,
                     headers: super::json_string_map(val, "headers"),
+                    extra: Default::default(),
                     // Cursor's MCP schema has no agent-native disable concept.
                     enabled: true,
                 }

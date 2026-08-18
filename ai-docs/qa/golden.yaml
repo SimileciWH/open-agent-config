@@ -1,0 +1,84 @@
+schema_version: 1
+purpose: Verify that an AI can route repository tasks to source-traceable modules before and during Kimi integration.
+baseline_commit: 4321a802c021736592ba408b5ff913cff3919053
+cases:
+  - id: Q-001
+    level: L2
+    question: Where is the complete Agent adapter registry and what must match the frontend?
+    expected_anchors:
+      - crates/hk-core/src/adapter/mod.rs::all_adapters
+      - src/lib/types.ts::AGENT_ORDER
+    acceptance: The answer names both registries and states that their order must remain aligned.
+  - id: Q-002
+    level: L2
+    question: What is the scan-to-store path for global and project Skills/MCP?
+    expected_anchors:
+      - crates/hk-core/src/scanner.rs::scan_all
+      - crates/hk-core/src/scanner.rs::scan_project_extensions
+      - crates/hk-core/src/store.rs::Store::sync_extensions
+    acceptance: The answer distinguishes global and project scope and names the DB reconciliation step.
+  - id: Q-003
+    level: L3
+    question: How does a Skill Enable/Disable operation change the filesystem?
+    expected_anchors:
+      - src/stores/extension-store.ts::toggle
+      - crates/hk-core/src/manager.rs::toggle_skill
+      - crates/hk-core/src/scanner.rs::skill_locations
+    acceptance: The answer states that the operation renames directory-form SKILL.md/SKILL.md.disabled or flat .md/.md.disabled within the target scope.
+  - id: Q-004
+    level: L3
+    question: How does MCP Disable protect secrets and restore configuration?
+    expected_anchors:
+      - crates/hk-core/src/manager.rs::toggle_mcp
+      - crates/hk-core/src/manager.rs::redact_mcp_env
+      - crates/hk-core/src/deployer.rs::restore_mcp_server
+    acceptance: The answer distinguishes Kimi/native in-place toggle from redacted DB snapshot and restore.
+  - id: Q-005
+    level: L3
+    question: How does a frontend group toggle affect multiple Agent instances?
+    expected_anchors:
+      - src/stores/extension-store.ts::toggle
+      - src/stores/extension-helpers.ts::buildGroups
+      - src/lib/invoke.ts::api
+    acceptance: The answer states that each instance is toggled and partial failures are collected.
+  - id: Q-006
+    level: L2
+    question: Do Web and Tauri use the same core toggle semantics?
+    expected_anchors:
+      - crates/hk-web/src/handlers/extensions.rs::toggle_extension
+      - crates/hk-desktop/src/commands/extensions.rs::toggle_extension
+      - crates/hk-core/src/manager.rs::toggle_extension_with_adapters
+    acceptance: The answer identifies shared core semantics and different transport wrappers.
+  - id: Q-007
+    level: L3
+    question: What must be updated when adding Kimi Code?
+    expected_anchors:
+      - crates/hk-core/src/adapter/mod.rs::AgentAdapter
+      - crates/hk-core/src/adapter/mod.rs::all_adapters
+      - src/lib/types.ts::AGENT_ORDER
+      - crates/hk-core/src/manager.rs::toggle_mcp
+    acceptance: The answer confirms adapter, registration, frontend order, capability, Kimi MCP writer, tests, and synchronized L0-L4 cards.
+  - id: Q-008
+    level: L4
+    question: What evidence is required before a change is complete?
+    expected_anchors:
+      - AGENTS.md
+      - ai-docs/WORKFLOW.md
+      - ai-docs/SYNC_LOG.md
+    acceptance: The answer requires source anchors, updated cards, documentation checks, relevant tests, and explicit unverified items.
+  - id: Q-009
+    level: L3
+    question: What are Kimi Code's MCP paths, transport spellings, and advanced-field policy?
+    expected_anchors:
+      - crates/hk-core/src/adapter/kimi.rs::KimiAdapter
+      - crates/hk-core/src/deployer.rs::set_kimi_mcp_enabled
+      - crates/hk-core/src/adapter/mod.rs::RemoteMcpSchema
+    acceptance: The answer names KIMI_CODE_HOME/default paths, project override, url versus transport=sse, native enabled, and explicit handling of advanced fields.
+  - id: Q-010
+    level: L4
+    question: How is application self-update prevented from following the upstream HarnessKit release channel, and what is required to enable it?
+    expected_anchors:
+      - src/lib/app-update-policy.ts::isAppUpdateEnabledForRuntime
+      - crates/hk-desktop/src/main.rs::app_update_enabled
+      - scripts/check-release-channel.mjs::validateReleaseChannel
+    acceptance: The answer distinguishes application updates from extension updates, confirms the disabled Web/Tauri gates, and requires the fork's own HTTPS feed, signing key, capabilities, artifacts, CI check, and cross-platform canary before enablement.

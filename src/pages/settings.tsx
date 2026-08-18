@@ -15,6 +15,7 @@ import {
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
+import { isAppUpdateEnabledForRuntime } from "@/lib/app-update-policy";
 import { openDirectoryPicker } from "@/lib/dialog";
 import {
   applyLanguagePreference,
@@ -175,6 +176,16 @@ function WebUpdateSection() {
       )}
     </div>
   );
+}
+
+function AppVersionSection() {
+  const desktop = isDesktop();
+  if (!isAppUpdateEnabledForRuntime(desktop)) {
+    return (
+      <span className="text-xs text-muted-foreground">v{__APP_VERSION__}</span>
+    );
+  }
+  return desktop ? <UpdateSection /> : <WebUpdateSection />;
 }
 
 export default function SettingsPage() {
@@ -342,7 +353,7 @@ export default function SettingsPage() {
           <h2 className="text-2xl font-bold tracking-tight select-none">
             {t("title")}
           </h2>
-          {isDesktop() ? <UpdateSection /> : <WebUpdateSection />}
+          <AppVersionSection />
         </div>
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto">

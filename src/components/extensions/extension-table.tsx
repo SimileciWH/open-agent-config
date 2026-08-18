@@ -44,7 +44,6 @@ export function ExtensionTable({
   // Subscribe to trigger re-render; accessed via getState() in cell renderers
   useExtensionStore((s) => s.updateStatuses);
   const toggle = useExtensionStore((s) => s.toggle);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `scope` is a trigger sentinel — cell renderers read scope-dependent filter results via getState(); listing it forces a column rebuild on scope change.
   const columns = useMemo(
     () => [
       col.display({

@@ -8,6 +8,7 @@ import { WebUpdateDialog } from "./components/layout/web-update-dialog";
 import { Confetti } from "./components/onboarding/confetti";
 import { Onboarding, useOnboarding } from "./components/onboarding/onboarding";
 import { ErrorBoundary } from "./components/shared/error-boundary";
+import { isAppUpdateEnabledForRuntime } from "./lib/app-update-policy";
 import { api } from "./lib/invoke";
 import { isDesktop } from "./lib/transport";
 import AgentsPage from "./pages/agents";
@@ -84,10 +85,12 @@ export default function App() {
     setAutoDisabledAgents([...snapshot]);
   }, [agents, agentVisibility]);
 
-  // Check for updates on startup (non-blocking, silent failure).
-  // Desktop uses Tauri's native updater; web mode polls GitHub releases.
+  // Check the configured release channel on startup (non-blocking, silent failure).
+  // The policy is disabled until the fork owns its release feed and signing key.
   useEffect(() => {
-    if (isDesktop()) {
+    const desktop = isDesktop();
+    if (!isAppUpdateEnabledForRuntime(desktop)) return;
+    if (desktop) {
       useUpdateStore.getState().checkForUpdate();
     } else {
       useWebUpdateStore.getState().checkForUpdate();
@@ -185,7 +188,8 @@ export default function App() {
   return (
     <>
       {showConfetti && <Confetti />}
-      {isDesktop() ? <UpdateDialog /> : <WebUpdateDialog />}
+      {isAppUpdateEnabledForRuntime(isDesktop()) &&
+        (isDesktop() ? <UpdateDialog /> : <WebUpdateDialog />)}
       <HashRouter>
         <ErrorBoundary>
           <Routes>

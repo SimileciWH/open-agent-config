@@ -9,6 +9,7 @@ import { DshMascot } from "./dsh-mascot";
 import { FallbackMascot } from "./fallback-mascot";
 import { GeminiMascot } from "./gemini-mascot";
 import { HermesMascot } from "./hermes-mascot";
+import { KimiMascot } from "./kimi-mascot";
 import { KiroMascot } from "./kiro-mascot";
 import { OmpMascot } from "./omp-mascot";
 import { OpencodeMascot } from "./opencode-mascot";
@@ -64,6 +65,11 @@ const MASCOT_MAP: Record<
   hermes: {
     component: HermesMascot,
     className: "mascot-hermes",
+    scale: 1,
+  },
+  kimi: {
+    component: KimiMascot,
+    className: "mascot-kimi",
     scale: 1,
   },
   kiro: {

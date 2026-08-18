@@ -1,9 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const RELEASES_URL =
-  "https://api.github.com/repos/RealZST/HarnessKit/releases/latest";
+  "https://updates.example.test/open-agent-config/releases/latest";
 const CACHE_KEY = "hk-web-update-cache";
 const DISMISS_KEY_PREFIX = "hk-update-dismissed-v";
+
+vi.mock("@/config/release-channel.json", () => ({
+  default: {
+    enabled: true,
+    webReleaseApiUrl:
+      "https://updates.example.test/open-agent-config/releases/latest",
+    webUpdateInstructionsUrl:
+      "https://updates.example.test/open-agent-config/instructions",
+  },
+}));
 
 function mockReleasesResponse(tag: string, body = "") {
   return {

@@ -1,5 +1,7 @@
 use crate::HkError;
-use crate::adapter::{HookEntry, HookFormat, McpFormat, McpServerEntry, McpTransport, RemoteMcpSchema};
+use crate::adapter::{
+    HookEntry, HookFormat, McpFormat, McpServerEntry, McpTransport, RemoteMcpSchema,
+};
 use fs2::FileExt;
 use std::io::{Read as _, Seek as _, SeekFrom, Write as _};
 use std::path::Path;
@@ -178,6 +180,15 @@ pub fn deploy_mcp_server(
     entry: &McpServerEntry,
     adapter: &dyn crate::adapter::AgentAdapter,
 ) -> Result<(), HkError> {
+    if !entry.extra.is_empty() && adapter.name() != "kimi" {
+        let fields = entry.extra.keys().cloned().collect::<Vec<_>>().join(", ");
+        return Err(HkError::Validation(format!(
+            "MCP server '{}' contains Kimi-specific fields that '{}' cannot represent: {}",
+            entry.name,
+            adapter.name(),
+            fields
+        )));
+    }
     let remote_schema = adapter.remote_mcp_schema();
     if entry.transport != McpTransport::Stdio {
         validate_remote_mcp_target(entry, adapter.name(), remote_schema)?;
@@ -215,11 +226,9 @@ fn validate_remote_mcp_target(
         RemoteMcpSchema::Unsupported => Err(HkError::Validation(format!(
             "{agent_name} does not support remote (HTTP/SSE) MCP servers"
         ))),
-        RemoteMcpSchema::Toml if entry.transport == McpTransport::Sse => {
-            Err(HkError::Validation(format!(
-                "{agent_name} supports Streamable HTTP MCP servers only, not SSE"
-            )))
-        }
+        RemoteMcpSchema::Toml if entry.transport == McpTransport::Sse => Err(HkError::Validation(
+            format!("{agent_name} supports Streamable HTTP MCP servers only, not SSE"),
+        )),
         _ => Ok(()),
     }
 }
@@ -230,11 +239,17 @@ fn build_mcp_json_value(
     remote: RemoteMcpSchema,
 ) -> Result<serde_json::Value, HkError> {
     if entry.transport == McpTransport::Stdio {
-        return Ok(serde_json::json!({
+        let mut obj = serde_json::json!({
             "command": entry.command,
             "args": entry.args,
             "env": entry.env,
-        }));
+        });
+        if remote == RemoteMcpSchema::Kimi
+            && let Some(object) = obj.as_object_mut()
+        {
+            object.extend(entry.extra.clone());
+        }
+        return Ok(obj);
     }
     let url = entry.url.clone().unwrap_or_default();
     let mut obj = serde_json::Map::new();
@@ -262,6 +277,12 @@ fn build_mcp_json_value(
         RemoteMcpSchema::ServerUrl => {
             obj.insert("serverUrl".into(), url.into());
         }
+        RemoteMcpSchema::Kimi => {
+            if entry.transport == McpTransport::Sse {
+                obj.insert("transport".into(), "sse".into());
+            }
+            obj.insert("url".into(), url.into());
+        }
         // Non-JSON formats have their own writers; validation rejects
         // Unsupported before this point. Reaching here means an adapter's
         // mcp_format() and remote_mcp_schema() disagree — surface it as an
@@ -286,6 +307,9 @@ fn build_mcp_json_value(
                     .collect(),
             ),
         );
+    }
+    if remote == RemoteMcpSchema::Kimi {
+        obj.extend(entry.extra.clone());
     }
     Ok(serde_json::Value::Object(obj))
 }
@@ -611,6 +635,28 @@ pub fn set_kiro_mcp_enabled(
     })
 }
 
+/// Flip a Kimi MCP server's native `enabled` flag in place.
+pub fn set_kimi_mcp_enabled(
+    config_path: &Path,
+    server_name: &str,
+    enabled: bool,
+) -> Result<(), HkError> {
+    locked_modify_json(config_path, |config| {
+        let servers = config
+            .get_mut("mcpServers")
+            .and_then(|v| v.as_object_mut())
+            .ok_or_else(|| HkError::NotFound("No mcpServers block found".into()))?;
+        let server = servers
+            .get_mut(server_name)
+            .and_then(|v| v.as_object_mut())
+            .ok_or_else(|| HkError::NotFound(format!("MCP server '{server_name}' not found")))?;
+        // Keep the entry and all Kimi-specific fields (cwd, tool filters,
+        // timeout settings, bearerTokenEnvVar, and future fields) intact.
+        server.insert("enabled".into(), serde_json::Value::Bool(enabled));
+        Ok(())
+    })
+}
+
 /// Flip an omp MCP server's native per-entry `enabled` flag in place, then
 /// scrub the user-level name list that would override the flag: on disable
 /// the name is removed from `enabledServers` (the force-enable allowlist
@@ -651,7 +697,11 @@ pub fn set_omp_mcp_enabled(
     if !user_config_path.exists() {
         return Ok(());
     }
-    let list_key = if enabled { "disabledServers" } else { "enabledServers" };
+    let list_key = if enabled {
+        "disabledServers"
+    } else {
+        "enabledServers"
+    };
     locked_modify_json(user_config_path, |config| {
         if let Some(list) = config.get_mut(list_key).and_then(|v| v.as_array_mut()) {
             list.retain(|v| v.as_str() != Some(server_name));
@@ -794,10 +844,7 @@ fn split_dsh_managed_block(
 ///   coexist with block-style entries in one document).
 /// - Block absent → if the remaining text has no non-comment content, append
 ///   `[]` (an empty/comment-only patch file is a dsh boot error).
-fn render_dsh_patch(
-    user_text: &str,
-    managed: &std::collections::BTreeMap<String, bool>,
-) -> String {
+fn render_dsh_patch(user_text: &str, managed: &std::collections::BTreeMap<String, bool>) -> String {
     if managed.is_empty() {
         let has_content = user_text
             .lines()
@@ -2270,6 +2317,24 @@ mod tests {
 
         let v = build_mcp_json_value(&http, RemoteMcpSchema::ServerUrl).unwrap();
         assert_eq!(v["serverUrl"], "https://mcp.linear.app/mcp");
+
+        let v = build_mcp_json_value(&http, RemoteMcpSchema::Kimi).unwrap();
+        assert_eq!(v["url"], "https://mcp.linear.app/mcp");
+        assert!(v.get("transport").is_none());
+        let v = build_mcp_json_value(&sse, RemoteMcpSchema::Kimi).unwrap();
+        assert_eq!(v["transport"], "sse");
+        assert_eq!(v["url"], "https://mcp.linear.app/mcp");
+
+        let mut stdio = McpServerEntry {
+            name: "filesystem".into(),
+            command: "npx".into(),
+            ..Default::default()
+        };
+        stdio
+            .extra
+            .insert("cwd".into(), serde_json::Value::String("/tmp/project".into()));
+        let v = build_mcp_json_value(&stdio, RemoteMcpSchema::Kimi).unwrap();
+        assert_eq!(v["cwd"], "/tmp/project");
     }
 
     #[test]
@@ -2289,9 +2354,22 @@ mod tests {
         // Remote without url is corrupt regardless of target.
         let mut broken = remote_entry(McpTransport::Http);
         broken.url = None;
-        let err = validate_remote_mcp_target(&broken, "claude", RemoteMcpSchema::TypeAndUrl)
-            .unwrap_err();
+        let err =
+            validate_remote_mcp_target(&broken, "claude", RemoteMcpSchema::TypeAndUrl).unwrap_err();
         assert!(matches!(err, HkError::ConfigCorrupted(_)));
+
+        let mut kimi_fields = remote_entry(McpTransport::Stdio);
+        kimi_fields
+            .extra
+            .insert("cwd".into(), serde_json::Value::String("/tmp/project".into()));
+        let config = TempDir::new().unwrap().path().join("mcp.json");
+        let err = deploy_mcp_server(
+            &config,
+            &kimi_fields,
+            &crate::adapter::claude::ClaudeAdapter::with_home("/nonexistent".into()),
+        )
+        .unwrap_err();
+        assert!(matches!(err, HkError::Validation(message) if message.contains("Kimi-specific")));
     }
 
     #[test]
@@ -2333,6 +2411,16 @@ mod tests {
         let server = &doc["mcpServers"]["linear"];
         assert_eq!(server["serverUrl"], "https://mcp.linear.app/mcp");
         assert!(server.get("url").is_none());
+
+        // Kimi (Kimi): HTTP omits transport; SSE writes transport=sse.
+        let config = dir.path().join("kimi.json");
+        let kimi = crate::adapter::kimi::KimiAdapter::with_home("/nonexistent".into());
+        deploy_mcp_server(&config, &sse, &kimi).unwrap();
+        let doc: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(&config).unwrap()).unwrap();
+        let server = &doc["mcpServers"]["linear"];
+        assert_eq!(server["transport"], "sse");
+        assert_eq!(server["url"], "https://mcp.linear.app/mcp");
     }
 
     #[test]
@@ -3499,6 +3587,34 @@ mod tests {
     }
 
     #[test]
+    fn test_set_kimi_mcp_enabled_preserves_native_fields() {
+        let dir = TempDir::new().unwrap();
+        let config = dir.path().join("mcp.json");
+        std::fs::write(
+            &config,
+            r#"{"mcpServers":{"github":{
+                "command":"npx","args":["server"],"cwd":"/tmp/project",
+                "enabledTools":["issues"],"startupTimeoutMs":12000
+            }}}"#,
+        )
+        .unwrap();
+
+        set_kimi_mcp_enabled(&config, "github", false).unwrap();
+        let disabled: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(&config).unwrap()).unwrap();
+        let entry = &disabled["mcpServers"]["github"];
+        assert_eq!(entry["enabled"], false);
+        assert_eq!(entry["cwd"], "/tmp/project");
+        assert_eq!(entry["enabledTools"][0], "issues");
+        assert_eq!(entry["startupTimeoutMs"], 12000);
+
+        set_kimi_mcp_enabled(&config, "github", true).unwrap();
+        let enabled: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(&config).unwrap()).unwrap();
+        assert_eq!(enabled["mcpServers"]["github"]["enabled"], true);
+    }
+
+    #[test]
     fn test_set_omp_mcp_enabled_flips_flag_and_scrubs_lists() {
         let dir = TempDir::new().unwrap();
         let config = dir.path().join("mcp.json");
@@ -3521,7 +3637,10 @@ mod tests {
             serde_json::from_str(&std::fs::read_to_string(&config).unwrap()).unwrap();
         assert_eq!(disabled["mcpServers"]["github"]["enabled"], false);
         assert_eq!(disabled["mcpServers"]["github"]["type"], "http");
-        assert_eq!(disabled["mcpServers"]["github"]["url"], "https://example.com/mcp");
+        assert_eq!(
+            disabled["mcpServers"]["github"]["url"],
+            "https://example.com/mcp"
+        );
         assert!(disabled["enabledServers"].as_array().unwrap().is_empty());
         assert_eq!(disabled["disabledServers"][0], "other");
 
@@ -3530,7 +3649,10 @@ mod tests {
         let enabled: serde_json::Value =
             serde_json::from_str(&std::fs::read_to_string(&config).unwrap()).unwrap();
         assert!(enabled["mcpServers"]["github"].get("enabled").is_none());
-        assert_eq!(enabled["mcpServers"]["github"]["url"], "https://example.com/mcp");
+        assert_eq!(
+            enabled["mcpServers"]["github"]["url"],
+            "https://example.com/mcp"
+        );
     }
 
     #[test]
@@ -4185,7 +4307,10 @@ mod dsh_toggle_tests {
 
         set_dsh_mcp_enabled(&path, "github", false).unwrap();
         let text = std::fs::read_to_string(&path).unwrap();
-        assert!(text.starts_with(HOME_WITH_GH), "user bytes preserved verbatim");
+        assert!(
+            text.starts_with(HOME_WITH_GH),
+            "user bytes preserved verbatim"
+        );
         assert!(text.contains("- id: mcp-github\n  disabled: true"));
         assert!(text.contains("managed by HarnessKit"));
 
@@ -4271,7 +4396,10 @@ mod dsh_toggle_tests {
         set_dsh_mcp_enabled(&path, "github", true).unwrap();
         let out = std::fs::read_to_string(&path).unwrap();
         assert!(out.contains("# user note after block"));
-        assert!(!out.contains("managed by HarnessKit"), "override no longer needed");
+        assert!(
+            !out.contains("managed by HarnessKit"),
+            "override no longer needed"
+        );
     }
 
     #[test]

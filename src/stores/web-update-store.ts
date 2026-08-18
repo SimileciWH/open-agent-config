@@ -1,8 +1,10 @@
 import { create } from "zustand";
+import {
+  appUpdatePolicy,
+  isAppUpdateEnabledForRuntime,
+} from "@/lib/app-update-policy";
 import { cleanChangelog, DISMISS_KEY_PREFIX } from "./update-store";
 
-const RELEASES_URL =
-  "https://api.github.com/repos/RealZST/HarnessKit/releases/latest";
 const CACHE_KEY = "hk-web-update-cache";
 const CACHE_TTL_MS = 60 * 60 * 1000;
 const MIN_UPDATE_CHECK_VISIBLE_MS = 600;
@@ -54,12 +56,14 @@ function writeCache(tag: string, body: string): void {
 async function fetchLatestRelease(
   force = false,
 ): Promise<{ tag: string; body: string } | null> {
+  const releasesUrl = appUpdatePolicy.webReleaseApiUrl;
+  if (!isAppUpdateEnabledForRuntime(false) || !releasesUrl) return null;
   if (!force) {
     const cached = readCache();
     if (cached) return { tag: cached.tag, body: cached.body };
   }
   try {
-    const response = await fetch(RELEASES_URL);
+    const response = await fetch(releasesUrl);
     if (!response.ok) return null;
     const data = (await response.json()) as {
       tag_name?: string;
@@ -83,7 +87,7 @@ interface WebUpdateState {
   /** User dismissed the reminder for `available.version` (sidebar card hidden). */
   dismissed: boolean;
 
-  /** When `force` is true, skip the sessionStorage cache and re-fetch from GitHub. */
+  /** When `force` is true, skip the sessionStorage cache and re-fetch the configured release. */
   checkForUpdate: (force?: boolean) => Promise<void>;
   /** Open the dialog (only when an update is available). */
   promptUpdate: () => void;
@@ -100,7 +104,7 @@ export const useWebUpdateStore = create<WebUpdateState>((set, get) => ({
   dismissed: false,
 
   async checkForUpdate(force = false) {
-    if (get().checking) return;
+    if (!isAppUpdateEnabledForRuntime(false) || get().checking) return;
     const startedAt = Date.now();
     set({ checking: true });
     try {
@@ -124,7 +128,7 @@ export const useWebUpdateStore = create<WebUpdateState>((set, get) => ({
   },
 
   promptUpdate() {
-    if (get().available) {
+    if (isAppUpdateEnabledForRuntime(false) && get().available) {
       set({ showDialog: true });
     }
   },

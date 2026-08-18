@@ -1,10 +1,12 @@
 import { ExternalLink, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import {
+  appUpdatePolicy,
+  isAppUpdateEnabledForRuntime,
+} from "@/lib/app-update-policy";
 import { localizeChangelog } from "@/lib/i18n/changelog";
 import { useWebUpdateStore } from "@/stores/web-update-store";
 import { ChangelogMarkdown } from "./changelog-markdown";
-
-const INSTRUCTIONS_URL = "https://github.com/RealZST/HarnessKit#updating";
 
 export function WebUpdateDialog() {
   const { t, i18n } = useTranslation("update");
@@ -12,8 +14,15 @@ export function WebUpdateDialog() {
   const showDialog = useWebUpdateStore((s) => s.showDialog);
   const dismissDialog = useWebUpdateStore((s) => s.dismissDialog);
   const dismissUpdate = useWebUpdateStore((s) => s.dismissUpdate);
+  const instructionsUrl = appUpdatePolicy.webUpdateInstructionsUrl;
 
-  if (!showDialog || !available) return null;
+  if (
+    !isAppUpdateEnabledForRuntime(false) ||
+    !instructionsUrl ||
+    !showDialog ||
+    !available
+  )
+    return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -53,7 +62,7 @@ export function WebUpdateDialog() {
             {t("close")}
           </button>
           <a
-            href={INSTRUCTIONS_URL}
+            href={instructionsUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"

@@ -25,6 +25,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Validate release channel
+        run: node scripts/check-release-channel.mjs
+
       - name: Generate changelog
         id: changelog
         env:

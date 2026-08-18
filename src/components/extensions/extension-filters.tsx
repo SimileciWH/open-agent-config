@@ -43,6 +43,7 @@ const AGENT_FILTER_COLORS: Record<string, string> = {
   windsurf: "bg-agent-windsurf/10 text-agent-windsurf border-agent-windsurf/30",
   opencode: "bg-agent-opencode/10 text-agent-opencode border-agent-opencode/30",
   hermes: "bg-agent-hermes/10 text-agent-hermes border-agent-hermes/30",
+  kimi: "bg-agent-kimi/10 text-agent-kimi border-agent-kimi/30",
   kiro: "bg-agent-kiro/10 text-agent-kiro border-agent-kiro/30",
   omp: "bg-agent-omp/10 text-agent-omp border-agent-omp/30",
   dsh: "bg-agent-dsh/10 text-agent-dsh border-agent-dsh/30",

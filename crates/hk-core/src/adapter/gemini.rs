@@ -126,9 +126,15 @@ impl AgentAdapter for GeminiAdapter {
             self.base_dir().join(".env"),
         ];
         // ~/.gemini/commands/*.toml
-        files.extend(super::files_with_ext(&self.base_dir().join("commands"), "toml"));
+        files.extend(super::files_with_ext(
+            &self.base_dir().join("commands"),
+            "toml",
+        ));
         // ~/.gemini/policies/*.toml
-        files.extend(super::files_with_ext(&self.base_dir().join("policies"), "toml"));
+        files.extend(super::files_with_ext(
+            &self.base_dir().join("policies"),
+            "toml",
+        ));
         files
     }
 
@@ -210,6 +216,7 @@ impl AgentAdapter for GeminiAdapter {
                     transport,
                     url,
                     headers: super::json_string_map(val, "headers"),
+                    extra: Default::default(),
                     // Gemini's MCP schema has no agent-native disable concept.
                     enabled: true,
                 }
@@ -367,7 +374,11 @@ mod tests {
     #[test]
     fn read_plugins_skips_dirs_without_manifest() {
         let tmp = tempfile::tempdir().unwrap();
-        let no_manifest = tmp.path().join(".gemini").join("extensions").join("stray-dir");
+        let no_manifest = tmp
+            .path()
+            .join(".gemini")
+            .join("extensions")
+            .join("stray-dir");
         std::fs::create_dir_all(&no_manifest).unwrap();
         let adapter = GeminiAdapter::with_home(tmp.path().to_path_buf());
         assert!(adapter.read_plugins().is_empty());
@@ -389,7 +400,8 @@ mod tests {
         std::fs::write(
             ext_dir.join("extension-enablement.json"),
             enablement.to_string(),
-        ).unwrap();
+        )
+        .unwrap();
 
         let adapter = GeminiAdapter::with_home(tmp.path().to_path_buf());
         let plugins = adapter.read_plugins();
@@ -422,7 +434,8 @@ mod tests {
         std::fs::write(
             ext_dir.join("extension-enablement.json"),
             r#"{"other-ext": {"overrides": ["!/some/path/*"]}}"#,
-        ).unwrap();
+        )
+        .unwrap();
 
         let adapter = GeminiAdapter::with_home(tmp.path().to_path_buf());
         let plugins = adapter.read_plugins();
@@ -455,7 +468,8 @@ mod tests {
         std::fs::write(
             ext_dir.join("extension-enablement.json"),
             enablement.to_string(),
-        ).unwrap();
+        )
+        .unwrap();
 
         let adapter = GeminiAdapter::with_home(tmp.path().to_path_buf());
         let plugins = adapter.read_plugins();

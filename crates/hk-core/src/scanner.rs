@@ -148,6 +148,10 @@ pub fn scan_skill_dir(dir: &Path, agent_name: &str) -> Vec<Extension> {
 
     for entry in entries.flatten() {
         let path = entry.path();
+        let is_flat_disabled = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .is_some_and(|name| name.ends_with(".md.disabled"));
         // Skills can be either: a directory containing SKILL.md (or SKILL.md.disabled), or a standalone .md file
         let (skill_file, is_disabled) = if path.is_dir() {
             let enabled_file = path.join("SKILL.md");
@@ -159,8 +163,8 @@ pub fn scan_skill_dir(dir: &Path, agent_name: &str) -> Vec<Extension> {
             } else {
                 continue;
             }
-        } else if path.extension().is_some_and(|ext| ext == "md") {
-            (path.clone(), false)
+        } else if path.extension().is_some_and(|ext| ext == "md") || is_flat_disabled {
+            (path.clone(), is_flat_disabled)
         } else {
             continue;
         };
@@ -170,11 +174,18 @@ pub fn scan_skill_dir(dir: &Path, agent_name: &str) -> Vec<Extension> {
 
         let (name, description, _requires_bins) =
             parse_skill_frontmatter(&content).unwrap_or_else(|| {
-                let name = path
-                    .file_stem()
-                    .unwrap_or_default()
-                    .to_string_lossy()
-                    .to_string();
+                let name = if is_flat_disabled {
+                    path.file_name()
+                        .and_then(|file| file.to_str())
+                        .and_then(|file| file.strip_suffix(".md.disabled"))
+                        .unwrap_or_default()
+                        .to_string()
+                } else {
+                    path.file_stem()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .to_string()
+                };
                 (name, String::new(), vec![])
             });
 
@@ -200,6 +211,12 @@ pub fn scan_skill_dir(dir: &Path, agent_name: &str) -> Vec<Extension> {
         // `.md` keys on its stem so the `.md` suffix is dropped.
         let lock_key = if path.is_dir() {
             path.file_name()
+        } else if is_flat_disabled {
+            path.file_name().and_then(|file| {
+                file.to_str()
+                    .and_then(|file| file.strip_suffix(".md.disabled"))
+                    .map(std::ffi::OsStr::new)
+            })
         } else {
             path.file_stem()
         }
@@ -232,7 +249,15 @@ pub fn scan_skill_dir(dir: &Path, agent_name: &str) -> Vec<Extension> {
             updated_at: file_modified_time(&path),
 
             source_path: Some(if is_disabled {
-                path.join("SKILL.md").to_string_lossy().to_string()
+                if path.is_dir() {
+                    path.join("SKILL.md").to_string_lossy().to_string()
+                } else {
+                    let path_string = path.to_string_lossy().to_string();
+                    path_string
+                        .strip_suffix(".disabled")
+                        .unwrap_or(&path_string)
+                        .to_string()
+                }
             } else {
                 skill_file.to_string_lossy().to_string()
             }),
@@ -343,13 +368,13 @@ fn mcp_remote_profile(server: &crate::adapter::McpServerEntry) -> (Vec<Permissio
         .unwrap_or_default();
     // Drop any userinfo (`user:pass@host`) so credentials embedded in the
     // URL never leak into the permission list or description.
-    let host = authority
-        .rsplit('@')
-        .next()
-        .unwrap_or_default()
-        .to_string();
+    let host = authority.rsplit('@').next().unwrap_or_default().to_string();
     permissions.push(Permission::Network {
-        domains: vec![if host.is_empty() { "*".into() } else { host.clone() }],
+        domains: vec![if host.is_empty() {
+            "*".into()
+        } else {
+            host.clone()
+        }],
     });
     let label = match server.transport {
         crate::adapter::McpTransport::Sse => "SSE",
@@ -1343,28 +1368,58 @@ pub fn skill_locations(
             locations.push((agent.to_string(), skill_path));
             return;
         }
-        // 2. Fallback: scan directories and match by SKILL.md frontmatter name
+        // 2. Direct flat-file match. A disabled flat skill keeps its enabled
+        // path as the logical location so callers can derive the sibling
+        // .md.disabled path for a toggle operation.
+        let flat_path = dir.join(format!("{clean_name}.md"));
+        if flat_path.exists()
+            || flat_path
+                .with_file_name(format!("{clean_name}.md.disabled"))
+                .exists()
+        {
+            locations.push((agent.to_string(), flat_path));
+            return;
+        }
+        // 3. Fallback: scan directories/files and match by frontmatter name
         let Ok(entries) = std::fs::read_dir(dir) else {
             return;
         };
         for entry in entries.flatten() {
             let p = entry.path();
-            if !p.is_dir() {
+            let flat_disabled = p
+                .file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(|name| name.ends_with(".md.disabled"));
+            if !p.is_dir() && !p.extension().is_some_and(|ext| ext == "md") && !flat_disabled {
                 continue;
             }
-            let skill_md = p.join("SKILL.md");
-            let skill_md_disabled = p.join("SKILL.md.disabled");
-            let md_path = if skill_md.exists() {
-                skill_md
-            } else if skill_md_disabled.exists() {
-                skill_md_disabled
+            let md_path = if p.is_dir() {
+                let skill_md = p.join("SKILL.md");
+                let skill_md_disabled = p.join("SKILL.md.disabled");
+                if skill_md.exists() {
+                    skill_md
+                } else if skill_md_disabled.exists() {
+                    skill_md_disabled
+                } else {
+                    continue;
+                }
             } else {
-                continue;
+                p.clone()
             };
             if let Some(parsed_name) = parse_skill_name(&md_path)
                 && (parsed_name == name || parsed_name == clean_name)
             {
-                locations.push((agent.to_string(), p));
+                let logical_path = if flat_disabled {
+                    let path_string = p.to_string_lossy().to_string();
+                    PathBuf::from(
+                        path_string
+                            .strip_suffix(".disabled")
+                            .unwrap_or(&path_string),
+                    )
+                } else {
+                    p
+                };
+                locations.push((agent.to_string(), logical_path));
                 break;
             }
         }
@@ -2213,6 +2268,32 @@ mod tests {
         assert_eq!(extensions.len(), 1);
         assert_eq!(extensions[0].name, "eslint-skill");
         assert_eq!(extensions[0].kind, ExtensionKind::Skill);
+    }
+
+    #[test]
+    fn test_scan_flat_skill_and_disabled_sibling() {
+        let dir = TempDir::new().unwrap();
+        let skill_file = dir.path().join("flat-skill.md");
+        std::fs::write(
+            &skill_file,
+            "---\nname: flat-skill\ndescription: Flat Kimi skill\n---\n",
+        )
+        .unwrap();
+        let skill_path = skill_file.to_string_lossy().to_string();
+
+        let enabled = scan_skill_dir(dir.path(), "kimi");
+        assert_eq!(enabled.len(), 1);
+        assert!(enabled[0].enabled);
+        assert_eq!(enabled[0].source_path.as_deref(), Some(skill_path.as_str()));
+
+        std::fs::rename(&skill_file, dir.path().join("flat-skill.md.disabled")).unwrap();
+        let disabled = scan_skill_dir(dir.path(), "kimi");
+        assert_eq!(disabled.len(), 1);
+        assert!(!disabled[0].enabled);
+        assert_eq!(
+            disabled[0].source_path.as_deref(),
+            Some(skill_path.as_str())
+        );
     }
 
     #[cfg(unix)]
@@ -3134,11 +3215,21 @@ mod config_tests {
         write(project.join(".github/instructions/general.instructions.md"));
         write(project.join(".github/instructions/frontend/react.instructions.md"));
         let copilot = rules_of(&CopilotAdapter::with_home(home.to_path_buf()));
-        assert!(copilot.iter().any(|p| p.ends_with("style/tone.instructions.md")));
-        assert!(copilot.iter().any(|p| p.ends_with("general.instructions.md")));
-        assert!(copilot
-            .iter()
-            .any(|p| p.ends_with("frontend/react.instructions.md")));
+        assert!(
+            copilot
+                .iter()
+                .any(|p| p.ends_with("style/tone.instructions.md"))
+        );
+        assert!(
+            copilot
+                .iter()
+                .any(|p| p.ends_with("general.instructions.md"))
+        );
+        assert!(
+            copilot
+                .iter()
+                .any(|p| p.ends_with("frontend/react.instructions.md"))
+        );
         assert!(!copilot.iter().any(|p| p.ends_with("notes.md")));
 
         // Cursor: nested .mdc rules are loaded; .md files anywhere in

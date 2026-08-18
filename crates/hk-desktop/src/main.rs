@@ -9,6 +9,30 @@ use parking_lot::Mutex;
 use std::sync::Arc;
 use tauri::Manager;
 
+#[derive(serde::Deserialize)]
+struct ReleaseChannelPolicy {
+    enabled: bool,
+}
+
+fn app_update_enabled() -> bool {
+    serde_json::from_str::<ReleaseChannelPolicy>(include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../src/config/release-channel.json"
+    )))
+    .map(|policy| policy.enabled)
+    .unwrap_or(false)
+}
+
+#[cfg(test)]
+mod release_channel_tests {
+    use super::app_update_enabled;
+
+    #[test]
+    fn app_update_is_disabled_by_default() {
+        assert!(!app_update_enabled());
+    }
+}
+
 fn main() {
     let data_dir = dirs::home_dir()
         .expect("Cannot determine home directory — set HOME environment variable")
@@ -16,17 +40,26 @@ fn main() {
     std::fs::create_dir_all(&data_dir).expect("Failed to create data dir");
     let store = Store::open(&data_dir.join("metadata.db")).expect("Failed to open database");
 
-
     // NOTE: tauri.conf.json sets `macOSPrivateApi: true`. This is required for:
     // 1. Window transparency (`"transparent": true` in window config)
     // 2. Sidebar vibrancy effect (`"windowEffects": {"effects": ["sidebar"]}`)
     // Without this flag, the NSVisualEffectView APIs needed for these effects
     // are not accessible, resulting in an opaque white window background.
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_opener::init());
+
+    // Keep updater and restart commands unavailable until the fork owns the
+    // release feed, signing key, updater configuration, and capabilities.
+    let builder = if app_update_enabled() {
+        builder
+            .plugin(tauri_plugin_updater::Builder::new().build())
+            .plugin(tauri_plugin_process::init())
+    } else {
+        builder
+    };
+
+    builder
         .manage(AppState {
             store: Arc::new(Mutex::new(store)),
             adapters: Arc::new(adapter::all_adapters()),

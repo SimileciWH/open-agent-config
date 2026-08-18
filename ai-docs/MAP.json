@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "repository": {
+    "name": "open-agent-config",
+    "upstream": "RealZST/HarnessKit",
+    "fork": "SimileciWH/open-agent-config",
+    "license": "Apache-2.0",
+    "baseline_commit": "4321a802c021736592ba408b5ff913cff3919053",
+    "source_of_truth": "source code and tests"
+  },
+  "inventory": {
+    "source_files": 336,
+    "rust_files": 89,
+    "typescript_and_tsx_files": 155,
+    "workflow_files": 4,
+    "frontend_root": "src",
+    "rust_workspace_root": "crates"
+  },
+  "workspace": {
+    "crates/hk-core": {
+      "role": "shared scanning, models, SQLite store, adapters, deployment and services",
+      "entry": "crates/hk-core/src/lib.rs"
+    },
+    "crates/hk-cli": {
+      "role": "hk command line interface and embedded web server launcher",
+      "entry": "crates/hk-cli/src/main.rs"
+    },
+    "crates/hk-web": {
+      "role": "Axum HTTP API and embedded frontend serving",
+      "entry": "crates/hk-web/src/lib.rs"
+    },
+    "crates/hk-desktop": {
+      "role": "Tauri desktop shell and IPC commands",
+      "entry": "crates/hk-desktop/src/main.rs"
+    },
+    "src": {
+      "role": "React 19 + Vite frontend shared by Web and Tauri",
+      "entry": "src/main.tsx"
+    }
+  },
+  "runtime_entrypoints": [
+    {
+      "id": "cli-web",
+      "path": "crates/hk-cli/src/main.rs::main",
+      "flow": "CLI parses commands; serve starts hk-web; other commands open Store, scan, then dispatch"
+    },
+    {
+      "id": "web",
+      "path": "crates/hk-web/src/lib.rs::serve",
+      "flow": "open ~/.harnesskit/metadata.db; build WebState with adapters; serve Axum router"
+    },
+    {
+      "id": "desktop",
+      "path": "crates/hk-desktop/src/main.rs::main",
+      "flow": "open Store; build AppState with adapters; register Tauri commands"
+    },
+    {
+      "id": "frontend",
+      "path": "src/lib/transport.ts::transport",
+      "flow": "Tauri IPC in desktop mode or POST /api/{command} in browser mode"
+    }
+  ],
+  "primary_flow": [
+    "adapter::all_adapters",
+    "scanner::scan_all",
+    "store::Store::sync_extensions",
+    "frontend extension grouping",
+    "frontend api.toggleExtension",
+    "web or desktop toggle command",
+    "manager::toggle_extension_with_adapters",
+    "deployer or native adapter writer",
+    "rescan and store reconciliation"
+  ],
+  "modules": [
+    {
+      "id": "core.adapter",
+      "level": "L2",
+      "status": "runtime-verified",
+      "card": "modules/adapter.md",
+      "sources": ["crates/hk-core/src/adapter/mod.rs", "crates/hk-core/src/adapter/*.rs"],
+      "anchors": [
+        "crates/hk-core/src/adapter/mod.rs::AgentAdapter",
+        "crates/hk-core/src/adapter/mod.rs::AgentCapabilities::from_adapter",
+        "crates/hk-core/src/adapter/mod.rs::all_adapters",
+        "crates/hk-core/src/adapter/kimi.rs::KimiAdapter"
+      ],
+      "consumers": ["scanner", "manager", "deployer", "service", "hk-web", "hk-desktop"]
+    },
+    {
+      "id": "core.scanner",
+      "level": "L2",
+      "status": "runtime-verified",
+      "card": "modules/scanner.md",
+      "sources": ["crates/hk-core/src/scanner.rs"],
+      "anchors": [
+        "crates/hk-core/src/scanner.rs::scan_all",
+        "crates/hk-core/src/scanner.rs::scan_adapter",
+        "crates/hk-core/src/scanner.rs::skill_locations",
+        "crates/hk-core/src/scanner.rs::scan_mcp_servers"
+      ],
+      "consumers": ["store", "manager", "web extensions handler", "desktop extensions commands"]
+    },
+    {
+      "id": "core.manager-deployer",
+      "level": "L2",
+      "status": "runtime-verified",
+      "card": "modules/manager-deployer.md",
+      "sources": ["crates/hk-core/src/manager.rs", "crates/hk-core/src/deployer.rs"],
+      "anchors": [
+        "crates/hk-core/src/manager.rs::toggle_extension_with_adapters",
+        "crates/hk-core/src/manager.rs::toggle_skill",
+        "crates/hk-core/src/manager.rs::toggle_mcp",
+        "crates/hk-core/src/deployer.rs::deploy_mcp_server",
+        "crates/hk-core/src/deployer.rs::set_kimi_mcp_enabled"
+      ],
+      "consumers": ["CLI", "Web API", "Tauri IPC", "frontend extension store"]
+    },
+    {
+      "id": "core.store-models",
+      "level": "L2",
+      "status": "runtime-verified",
+      "card": "modules/store-models.md",
+      "sources": ["crates/hk-core/src/models.rs", "crates/hk-core/src/store.rs"],
+      "anchors": [
+        "crates/hk-core/src/models.rs::Extension",
+        "crates/hk-core/src/models.rs::ConfigScope",
+        "crates/hk-core/src/store.rs::Store::open",
+        "crates/hk-core/src/store.rs::sync_extensions"
+      ],
+      "consumers": ["scanner", "manager", "service", "web", "desktop", "CLI"]
+    },
+    {
+      "id": "core.service-install",
+      "level": "L2",
+      "status": "runtime-verified",
+      "card": "modules/service-install.md",
+      "sources": ["crates/hk-core/src/service.rs", "crates/hk-core/src/kits/*.rs"],
+      "anchors": [
+        "crates/hk-core/src/service.rs::install_to_agent",
+        "crates/hk-core/src/service.rs::delete_extension",
+        "crates/hk-core/src/kits/service.rs::sync_kit_to_project"
+      ],
+      "consumers": ["Web install handlers", "Tauri install commands", "frontend kits and marketplace"]
+    },
+    {
+      "id": "ui.extension-control",
+      "level": "L2",
+      "status": "runtime-verified",
+      "card": "modules/frontend-extension-control.md",
+      "sources": ["src/stores/extension-store.ts", "src/stores/extension-helpers.ts", "src/lib/invoke.ts", "src/lib/transport.ts", "src/lib/types.ts", "src/components/extensions/extension-filters.tsx", "src/components/onboarding/onboarding.tsx", "src/components/shared/agent-mascot/agent-mascot.tsx", "src/components/shared/agent-mascot/kimi-mascot.tsx", "src/index.css"],
+      "anchors": [
+        "src/stores/extension-store.ts::toggle",
+        "src/stores/extension-helpers.ts::buildGroups",
+        "src/lib/invoke.ts::api",
+        "src/lib/transport.ts::transport",
+        "src/lib/types.ts::AGENT_ORDER",
+        "src/lib/types.ts::agentDisplayName"
+      ],
+      "consumers": ["src/pages/extensions.tsx", "shared Extension UI components"]
+    },
+    {
+      "id": "runtime.boundaries",
+      "level": "L2",
+      "status": "runtime-verified",
+      "card": "modules/runtime-boundaries.md",
+      "sources": ["crates/hk-web/src/router.rs", "crates/hk-web/src/handlers/extensions.rs", "crates/hk-desktop/src/commands/extensions.rs", "crates/hk-cli/src/main.rs", ".github/workflows/*.yml"],
+      "anchors": [
+        "crates/hk-web/src/router.rs::build_router",
+        "crates/hk-web/src/handlers/extensions.rs::toggle_extension",
+        "crates/hk-desktop/src/commands/extensions.rs::toggle_extension",
+        "crates/hk-cli/src/main.rs::main"
+      ],
+      "consumers": ["web mode", "Tauri desktop", "CLI", "CI and release workflows"]
+    },
+    {
+      "id": "runtime.app-update-channel",
+      "level": "L2",
+      "status": "runtime-verified",
+      "card": "modules/app-update-channel.md",
+      "sources": ["src/config/release-channel.json", "src/lib/app-update-policy.ts", "src/stores/update-store.ts", "src/stores/web-update-store.ts", "crates/hk-desktop/src/main.rs", "crates/hk-desktop/tauri.conf.json", "crates/hk-desktop/capabilities/default.json", "scripts/check-release-channel.mjs"],
+      "anchors": [
+        "src/lib/app-update-policy.ts::isAppUpdateEnabledForRuntime",
+        "src/stores/update-store.ts::checkForUpdate()",
+        "src/stores/web-update-store.ts::checkForUpdate(force = false)",
+        "crates/hk-desktop/src/main.rs::app_update_enabled",
+        "scripts/check-release-channel.mjs::validateReleaseChannel"
+      ],
+      "consumers": ["frontend app startup", "sidebar", "settings", "Web update store", "Tauri plugin registration", "PR and release workflows"]
+    }
+  ],
+  "support_matrix": {
+    "registered_agents": ["claude", "codex", "gemini", "cursor", "antigravity", "copilot", "windsurf", "opencode", "hermes", "kimi", "kiro", "omp", "dsh"],
+    "planned_agents": [],
+    "registration_source": "crates/hk-core/src/adapter/mod.rs::all_adapters",
+    "frontend_order_source": "src/lib/types.ts::AGENT_ORDER",
+    "cross_layer_invariant": "adapter order and frontend display order must remain aligned"
+  },
+  "verification_commands": {
+    "docs": "npm run check:ai-docs",
+    "release_channel": "npm run check:release-channel",
+    "frontend_tests": "npm test",
+    "frontend_build": "npm run build",
+    "frontend_lint": "npm run lint",
+    "rust_tests": "cargo test --workspace",
+    "web_dev": "cargo run -p hk-cli -- serve",
+    "desktop_dev": "cargo tauri dev"
+  }
+}

@@ -138,7 +138,9 @@ fn parse_patch_rows(text: &str, origin: &Path) -> Vec<CordisRow> {
     };
     let mut rows = Vec::new();
     for item in items {
-        let Some(map) = item.as_mapping() else { continue };
+        let Some(map) = item.as_mapping() else {
+            continue;
+        };
         let has_id = map.get("id").is_some();
         let insert = map.get("insert").and_then(|v| v.as_sequence());
         match (has_id, insert) {
@@ -158,7 +160,10 @@ fn parse_patch_rows(text: &str, origin: &Path) -> Vec<CordisRow> {
                 id: yaml_str(map, "id"),
                 name: yaml_str(map, "name"),
                 disabled: yaml_disabled(map.get("disabled")),
-                config: map.get("config").cloned().unwrap_or(serde_yaml::Value::Null),
+                config: map
+                    .get("config")
+                    .cloned()
+                    .unwrap_or(serde_yaml::Value::Null),
                 from_insert: false,
             }),
             // {id, insert} = group append; bare junk = neither. Both skipped.
@@ -200,14 +205,24 @@ impl DshAdapter {
         let mut anon: Vec<McpRowState> = Vec::new();
 
         for row in parse_patch_rows(text, origin) {
-            let CordisRow { id, name, disabled, config, from_insert } = row;
+            let CordisRow {
+                id,
+                name,
+                disabled,
+                config,
+                from_insert,
+            } = row;
             let is_mcp_def = from_insert && name.as_deref() == Some(MCP_CLIENT_PLUGIN);
             match id {
                 Some(id) if is_mcp_def => {
                     order.push(id.clone());
                     by_id.insert(
                         id.clone(),
-                        McpRowState { id: Some(id), disabled: disabled.unwrap_or(false), config },
+                        McpRowState {
+                            id: Some(id),
+                            disabled: disabled.unwrap_or(false),
+                            config,
+                        },
                     );
                 }
                 Some(id) if !from_insert => {
@@ -225,14 +240,18 @@ impl DshAdapter {
                 // From-insert definition of some other plugin — never an
                 // override; skip (even on a malformed id collision).
                 Some(_) => {}
-                None if is_mcp_def => {
-                    anon.push(McpRowState { id: None, disabled: disabled.unwrap_or(false), config })
-                }
+                None if is_mcp_def => anon.push(McpRowState {
+                    id: None,
+                    disabled: disabled.unwrap_or(false),
+                    config,
+                }),
                 None => {}
             }
         }
-        let mut out: Vec<McpRowState> =
-            order.into_iter().filter_map(|id| by_id.remove(&id)).collect();
+        let mut out: Vec<McpRowState> = order
+            .into_iter()
+            .filter_map(|id| by_id.remove(&id))
+            .collect();
         out.extend(anon);
         out
     }
@@ -275,6 +294,7 @@ impl DshAdapter {
                     transport,
                     url,
                     headers: super::yaml_string_map(config, "headers"),
+                    extra: Default::default(),
                     enabled: !row.disabled,
                 })
             })
@@ -451,7 +471,10 @@ mod tests {
             ]
         );
         // Canonical install target is the dsh-owned dir (skill_dir_for uses first).
-        assert_eq!(adapter.project_skill_dirs(), vec![".dsh/skills".to_string()]);
+        assert_eq!(
+            adapter.project_skill_dirs(),
+            vec![".dsh/skills".to_string()]
+        );
         assert_eq!(
             adapter.project_skill_read_dirs(),
             vec![".agents/skills".to_string()]
@@ -467,18 +490,29 @@ mod tests {
         std::fs::write(dsh_home.join("profiles/web/cordis.patch.yml"), "[]\n").unwrap();
         let adapter = DshAdapter::with_home(tmp.path().to_path_buf());
 
-        assert_eq!(adapter.global_rules_files(), vec![dsh_home.join("AGENTS.md")]);
+        assert_eq!(
+            adapter.global_rules_files(),
+            vec![dsh_home.join("AGENTS.md")]
+        );
         let settings = adapter.global_settings_files();
         assert!(settings.contains(&dsh_home.join("settings.yaml")));
         assert!(settings.contains(&dsh_home.join("cordis.patch.yml")));
         assert!(settings.contains(&dsh_home.join("profiles/web/cordis.patch.yml")));
         assert_eq!(
             adapter.project_rules_patterns(),
-            vec!["AGENTS.md", "CLAUDE.md", "AGENTS.local.md", "CLAUDE.local.md"]
+            vec![
+                "AGENTS.md",
+                "CLAUDE.md",
+                "AGENTS.local.md",
+                "CLAUDE.local.md"
+            ]
         );
         // HK-side project-discovery marker (dsh's only project-level dir).
         // dsh itself finds project roots by walking to the nearest `.git`.
-        assert_eq!(adapter.project_markers(), vec![super::super::ProjectMarker::Dir(".dsh")]);
+        assert_eq!(
+            adapter.project_markers(),
+            vec![super::super::ProjectMarker::Dir(".dsh")]
+        );
         // No project-level MCP/hook config exists upstream.
         assert_eq!(adapter.project_mcp_config_relpath(), None);
         assert_eq!(adapter.project_hook_config_relpath(), None);
@@ -493,14 +527,21 @@ mod tests {
     fn serde_yaml_strips_double_bang_tags_to_plain_strings() {
         for (text, expected) in [
             ("k: !!js process.cwd()", "process.cwd()"),
-            ("k: !!js '`Bearer ${process.env.T}`'", "`Bearer ${process.env.T}`"),
+            (
+                "k: !!js '`Bearer ${process.env.T}`'",
+                "`Bearer ${process.env.T}`",
+            ),
             (
                 "k: !!js >-\n  process.env.X?.trim() ||\n  fallback()",
                 "process.env.X?.trim() || fallback()",
             ),
         ] {
             let v: serde_yaml::Value = serde_yaml::from_str(text).unwrap();
-            assert_eq!(v.get("k").and_then(|v| v.as_str()), Some(expected), "input: {text}");
+            assert_eq!(
+                v.get("k").and_then(|v| v.as_str()),
+                Some(expected),
+                "input: {text}"
+            );
         }
     }
 
@@ -559,7 +600,10 @@ mod tests {
         let web = servers.iter().find(|s| s.name == "web").unwrap();
         assert_eq!(web.transport, McpTransport::Http);
         assert_eq!(web.url.as_deref(), Some("http://localhost:3000/mcp"));
-        assert_eq!(web.headers["Authorization"], "`Bearer ${process.env.MCP_TOKEN}`");
+        assert_eq!(
+            web.headers["Authorization"],
+            "`Bearer ${process.env.MCP_TOKEN}`"
+        );
         assert!(web.enabled);
     }
 
@@ -574,7 +618,10 @@ mod tests {
             .into_iter()
             .find(|s| s.name == "github")
             .unwrap();
-        assert!(gh.enabled, "later entry wins (single ordered apply upstream)");
+        assert!(
+            gh.enabled,
+            "later entry wins (single ordered apply upstream)"
+        );
     }
 
     #[test]
@@ -639,7 +686,12 @@ mod tests {
         let servers = adapter.read_mcp_servers();
         assert_eq!(servers.len(), 2);
         for s in &servers {
-            assert_eq!(s.transport, McpTransport::Http, "{} should be remote", s.name);
+            assert_eq!(
+                s.transport,
+                McpTransport::Http,
+                "{} should be remote",
+                s.name
+            );
             assert!(s.command.is_empty(), "{} should carry no command", s.name);
             assert!(s.url.is_some(), "{} should keep its url", s.name);
         }

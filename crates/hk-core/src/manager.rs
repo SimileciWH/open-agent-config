@@ -141,20 +141,30 @@ fn toggle_skill(
 
     // Fallback: if no paths found via adapters, use the stored source_path
     let paths: Vec<PathBuf> = if locations.is_empty() {
-        ext.source_path
-            .iter()
-            .map(|p| {
-                let full = PathBuf::from(p);
-                full.parent().unwrap_or(&full).to_path_buf()
-            })
-            .collect()
+        ext.source_path.iter().map(PathBuf::from).collect()
     } else {
         locations.into_iter().map(|(_, path)| path).collect()
     };
 
-    for skill_dir in &paths {
-        let skill_file = skill_dir.join("SKILL.md");
-        let disabled_file = skill_dir.join("SKILL.md.disabled");
+    for location in &paths {
+        // Directory-form skills use SKILL.md/SKILL.md.disabled. Kimi also
+        // supports flat files, whose disabled sibling is <name>.md.disabled.
+        let (skill_file, disabled_file) = if location.is_dir() {
+            (
+                location.join("SKILL.md"),
+                location.join("SKILL.md.disabled"),
+            )
+        } else if location.file_name().and_then(|n| n.to_str()) == Some("SKILL.md") {
+            (
+                location.clone(),
+                location.with_file_name("SKILL.md.disabled"),
+            )
+        } else {
+            (
+                location.clone(),
+                PathBuf::from(format!("{}.disabled", location.to_string_lossy())),
+            )
+        };
         if enabled {
             if disabled_file.exists() {
                 std::fs::rename(&disabled_file, &skill_file)?;
@@ -183,13 +193,15 @@ fn toggle_mcp(
         let Some(config_path) = a.mcp_config_path_for(&ext.scope) else {
             continue;
         };
-        // Agents with a native per-server `enabled` field (Hermes) disable IN
+        // Agents with a native per-server `enabled` field (Kimi/Hermes) disable IN
         // PLACE: flip `enabled` in the config, keeping the entry, secrets, and
         // advanced keys, and take NO DB snapshot — the on-disk `enabled` is read
         // back by read_mcp_servers on rescan. Mirrors `hermes mcp` enable/disable.
         // Docs: https://hermes-agent.nousresearch.com/docs/reference/mcp-config-reference
         if a.supports_native_mcp_toggle() {
-            if a.name() == "kiro" {
+            if a.name() == "kimi" {
+                deployer::set_kimi_mcp_enabled(&config_path, &ext.name, enabled)?;
+            } else if a.name() == "kiro" {
                 deployer::set_kiro_mcp_enabled(&config_path, &ext.name, enabled)?;
             } else if a.name() == "omp" {
                 // Entry flag flips in the scope's own file; the user-level
@@ -1368,6 +1380,52 @@ mod tests {
     }
 
     #[test]
+    fn test_toggle_flat_skill_renames_md_sibling() {
+        let dir = TempDir::new().unwrap();
+        let store = crate::store::Store::open(&dir.path().join("test.db")).unwrap();
+        let skill_file = dir.path().join("flat-skill.md");
+        std::fs::write(&skill_file, "---\nname: flat-skill\n---\n").unwrap();
+
+        let ext = Extension {
+            id: "flat-skill-id".into(),
+            kind: ExtensionKind::Skill,
+            name: "flat-skill".into(),
+            description: String::new(),
+            source: Source {
+                origin: SourceOrigin::Local,
+                url: None,
+                version: None,
+                commit_hash: None,
+                from_manifest: false,
+            },
+            agents: vec!["kimi".into()],
+            tags: vec![],
+            pack: None,
+            permissions: vec![],
+            enabled: true,
+            trust_score: None,
+            installed_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+            source_path: Some(skill_file.to_string_lossy().to_string()),
+            cli_parent_id: None,
+            cli_meta: None,
+            install_meta: None,
+            scope: ConfigScope::Global,
+            mcp_transport: None,
+        };
+        store.insert_extension(&ext).unwrap();
+
+        let manager = Manager::new(store);
+        manager.toggle(&ext.id, false).unwrap();
+        assert!(!skill_file.exists());
+        assert!(dir.path().join("flat-skill.md.disabled").exists());
+
+        manager.toggle(&ext.id, true).unwrap();
+        assert!(skill_file.exists());
+        assert!(!dir.path().join("flat-skill.md.disabled").exists());
+    }
+
+    #[test]
     fn test_uninstall_extension() {
         let dir = TempDir::new().unwrap();
         let db_path = dir.path().join("test.db");
@@ -2411,6 +2469,56 @@ mod tests {
             store.get_extension(&ext.id).unwrap().unwrap().enabled,
             "DB shows enabled"
         );
+    }
+
+    #[test]
+    fn test_kimi_mcp_native_disable_enable_in_place() {
+        let dir = TempDir::new().unwrap();
+        let home = dir.path();
+        let kimi = home.join(".kimi-code");
+        std::fs::create_dir_all(&kimi).unwrap();
+        std::fs::write(
+            kimi.join("mcp.json"),
+            r#"{"mcpServers":{"github":{
+                "command":"npx","args":["-y","server"],"env":{"TOKEN":"secret123"},
+                "cwd":"/tmp/project","enabledTools":["issues"]
+            }}}"#,
+        )
+        .unwrap();
+
+        let store = crate::store::Store::open(&dir.path().join("test.db")).unwrap();
+        let adapters: Vec<Box<dyn adapter::AgentAdapter>> = vec![Box::new(
+            adapter::kimi::KimiAdapter::with_home(home.to_path_buf()),
+        )];
+
+        let scanned = scanner::scan_mcp_servers(&*adapters[0]);
+        store.sync_extensions(&scanned).unwrap();
+        let ext = store
+            .list_extensions(Some(ExtensionKind::Mcp), None)
+            .unwrap()
+            .into_iter()
+            .find(|e| e.name == "github")
+            .expect("github mcp scanned");
+        assert!(ext.enabled);
+
+        toggle_extension_with_adapters(&store, &adapters, &ext.id, false).unwrap();
+        let disabled: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(kimi.join("mcp.json")).unwrap()).unwrap();
+        let entry = &disabled["mcpServers"]["github"];
+        assert_eq!(entry["enabled"], false);
+        assert_eq!(entry["env"]["TOKEN"], "secret123");
+        assert_eq!(entry["cwd"], "/tmp/project");
+        assert_eq!(entry["enabledTools"][0], "issues");
+        assert!(
+            store.get_disabled_config(&ext.id).unwrap().is_none(),
+            "native disable must take no DB snapshot"
+        );
+
+        toggle_extension_with_adapters(&store, &adapters, &ext.id, true).unwrap();
+        let enabled: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(kimi.join("mcp.json")).unwrap()).unwrap();
+        assert_eq!(enabled["mcpServers"]["github"]["enabled"], true);
+        assert!(store.get_extension(&ext.id).unwrap().unwrap().enabled);
     }
 
     #[test]

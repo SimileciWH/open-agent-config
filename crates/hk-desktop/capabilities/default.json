@@ -9,8 +9,6 @@
     "core:window:allow-set-theme",
     "core:window:allow-set-effects",
     "dialog:default",
-    "opener:default",
-    "updater:default",
-    "process:allow-restart"
+    "opener:default"
   ]
 }

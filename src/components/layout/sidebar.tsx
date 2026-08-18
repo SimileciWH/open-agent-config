@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router-dom";
+import { isAppUpdateEnabledForRuntime } from "@/lib/app-update-policy";
 import { isDesktop } from "@/lib/transport";
 import { useServerInfo } from "@/lib/use-server-info";
 import { ScopeSwitcher } from "./scope-switcher";
@@ -73,6 +74,8 @@ function SidebarLink({
 export function Sidebar() {
   const { t } = useTranslation("navigation");
   const serverInfo = useServerInfo();
+  const desktop = isDesktop();
+  const appUpdateEnabled = isAppUpdateEnabledForRuntime(desktop);
   return (
     <aside className="flex h-full w-48 shrink-0 flex-col px-3 pb-5 select-none">
       {/* Top spacer for traffic lights */}
@@ -108,7 +111,7 @@ export function Sidebar() {
         {/* Settings separator */}
         <div className="mt-auto mx-3 mb-1 border-t border-sidebar-border/40" />
 
-        {isDesktop() ? <UpdateCard /> : <WebUpdateCard />}
+        {appUpdateEnabled && (desktop ? <UpdateCard /> : <WebUpdateCard />)}
 
         <ScopeSwitcher />
 
