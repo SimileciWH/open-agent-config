@@ -2,7 +2,7 @@
 id: core.scanner
 level: L2
 status: runtime-verified
-verified_commit: 6567543deb124c3e871665334b9d972f1aa7c879
+verified_commit: f37cfb93920740d24dfcfb00581e95ecb1d4b608
 last_verified: 2026-08-19
 source_paths:
   - crates/oac-core/src/scanner.rs

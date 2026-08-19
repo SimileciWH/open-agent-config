@@ -94,3 +94,10 @@
 - OAC merge boundary: the feature implementation is represented under `crates/oac-core`, `crates/oac-web`, and `crates/oac-desktop`; legacy feature-branch crate names were not carried into the OAC tree.
 - Documentation: added `ui.frontend-shell`, `core.project-paths`, and the project-path verification playbook, plus Golden QA cases Q-014 and Q-015.
 - Initial feature verification: `npm test`, `npm run lint`, `npm run build`, `npm run check:ai-docs`, targeted Rust scanner tests, workspace Rust tests, browser UI acceptance, and `git diff --check` passed before the main-branch merge. Final post-merge results and merge commit are recorded in the follow-up entry below.
+
+## 2026-08-19 — Main merge verification
+
+- Source commit: `f37cfb93920740d24dfcfb00581e95ecb1d4b608`.
+- Merge: `a668d79` was merged into `main` with OAC path conflict resolution; the main branch keeps `oac-core`, `oac-web`, and `oac-desktop` identity while retaining the requested UI and project discovery behavior.
+- Verification passed after merge: `npm test` (36 files, 292 tests), `npm run lint` (191 files), `npm run build` (2106 modules), `cargo test --workspace` (oac-cli 17, oac-core 623, toggle integration 9, oac-desktop 3, oac-web unit 3, oac-web API 8), `cargo metadata --no-deps --format-version 1`, `npm run check:ai-docs`, `npm run check:release-channel`, `npm run check:oac-identity`, targeted recursive scanner test, and `git diff --check`.
+- Known warnings: Vite reports the existing main bundle above 500 kB and Node reports the existing `module.register()` deprecation; neither failed the build.

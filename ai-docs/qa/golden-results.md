@@ -2,7 +2,7 @@
 
 ## Verification context
 
-- Source baseline: `6567543deb124c3e871665334b9d972f1aa7c879` plus the current OAC refactor working tree.
+- Source commit: `f37cfb93920740d24dfcfb00581e95ecb1d4b608` (main-branch merge).
 - Node: `v26.3.0`
 - npm: `11.16.0`
 - Rust: `rustc/cargo 1.97.1` from Homebrew

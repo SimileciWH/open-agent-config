@@ -1,6 +1,6 @@
 schema_version: 1
 purpose: Verify that an AI can route repository tasks to source-traceable modules across Kimi integration, OAC identity migration, Kit safety, and release isolation.
-baseline_commit: 6567543deb124c3e871665334b9d972f1aa7c879
+baseline_commit: f37cfb93920740d24dfcfb00581e95ecb1d4b608
 cases:
   - id: Q-001
     level: L2

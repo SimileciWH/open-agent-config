@@ -2,10 +2,10 @@
 
 ## 当前基线
 
-- 源码基线：`6567543deb124c3e871665334b9d972f1aa7c879`
-- 源码与项目配置文件：341（不含 `ai-docs/` 和根目录 `AGENTS.md`）
+- 源码基线：`f37cfb93920740d24dfcfb00581e95ecb1d4b608`
+- 源码与项目配置文件：344（不含 `ai-docs/` 和根目录 `AGENTS.md`）
 - Rust 文件：90
-- TypeScript/TSX 文件：157
+- TypeScript/TSX 文件：160
 - CI workflow：4
 - 当前覆盖策略：全仓 L0/L1，Kimi 影响面的 L2-L4
 
