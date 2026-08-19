@@ -1,5 +1,4 @@
 {
-  "settingsLabel": "Workspace settings",
   "dismissHint": "Dismiss hint",
   "dismissNotification": "Dismiss notification",
   "undo": "Undo",
@@ -44,6 +43,7 @@
     "all": "All scopes",
     "label": "Scope",
     "addProject": "Add Project...",
+    "manageProjects": "Manage Projects...",
     "installToScope": "Install to scope",
     "installToScopeColon": "Install to scope:",
     "required": "— Required —",

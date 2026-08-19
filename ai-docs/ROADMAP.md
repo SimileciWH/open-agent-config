@@ -71,3 +71,11 @@ Kimi 第一版业务代码已完成；若全套验证失败，必须回到对应
 - [x] 添加 Release Channel 策略与 PR/tag workflow 门禁。
 - [ ] 建立 fork 自己的 Release、Tauri 签名密钥和跨平台 canary。
 - [ ] 完成上述前置条件后，按 `playbooks/app-update-channel.md` 启用升级通道。
+
+### Phase 3：界面收口与上下文配置
+
+- [x] 删除独立 Settings 导航和页面，保留旧路由兼容重定向。
+- [x] 将 Add/Manage Project 合并到 Topbar Scope 菜单，并统一为扫描后确认。
+- [x] 将 All/Detected 纯过滤、单 Agent 启停和配置位置合并到 Agents 页面。
+- [x] 默认 Agent 目录改为 Adapter 真值只读展示，不再把未接入扫描的 legacy custom path 标成生效覆盖。
+- [x] 增加前端定向测试、L2 Agent 管理卡、L3 Playbook 和 L4 Golden QA。

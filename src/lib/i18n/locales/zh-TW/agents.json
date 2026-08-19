@@ -2,19 +2,37 @@
   "list": {
     "header": "代理",
     "notDetected": "未偵測到",
-    "noDetected": "未偵測到任何代理"
+    "detected": "已偵測到",
+    "disabled": "已停用",
+    "all": "全部",
+    "detectedOnly": "已偵測",
+    "filterAria": "篩選代理",
+    "noneForFilter": "沒有偵測到代理。切換到「全部」可檢視所有受支援的代理。",
+    "enableAria": "啟用 {{agent}}",
+    "disableAria": "停用 {{agent}}",
+    "reorderAria": "調整 {{agent}} 順序"
   },
   "detail": {
     "selectAgent": "選擇一個代理以檢視它的設定",
+    "detected": "已偵測到",
     "notDetected": "未偵測到",
-    "addCustomPath": "新增自訂路徑",
+    "enabled": "已啟用",
+    "disabled": "已停用",
+    "addConfigLocation": "新增設定位置",
     "addCustomPathPlaceholder": "貼上檔案或資料夾路徑...",
+    "defaultLocation": "預設 Agent 位置",
+    "locationUnavailable": "位置無法使用",
+    "defaultLocationHint": "Adapter 會使用此位置進行偵測和自動掃描。",
+    "notDetectedHint": "此位置中沒有找到受支援的設定。如果設定位於其他位置，可在下方新增既有檔案或資料夾。",
     "selectFile": "選擇檔案",
     "selectFolder": "選擇資料夾",
     "browseFile": "瀏覽檔案...",
     "browseFolder": "瀏覽資料夾...",
     "add": "新增",
-    "emptyForScope": "{{agent}} 在 {{scope}} 沒有任何設定"
+    "noConfigDetected": "未偵測到設定",
+    "noConfigDetectedHint": "即使尚未安裝，此代理仍可保持啟用。只有當設定檔確實位於預設位置之外時，才需要新增設定位置。",
+    "emptyForScope": "{{agent}} 在 {{scope}} 沒有任何設定",
+    "emptyForScopeHint": "可以切換作用域，或新增既有設定檔或資料夾。"
   },
   "file": {
     "missing": "遺失",
@@ -42,12 +60,9 @@
     "customPathUpdated": "已更新自訂路徑",
     "customPathRemoved": "已移除自訂路徑",
     "failedSaveOrder": "儲存代理排序失敗",
-    "pathUpdated": "已更新 {{agent}} 路徑",
-    "pathUpdateFailed": "更新 {{agent}} 路徑失敗",
     "agentEnabled": "已啟用 {{agent}}",
     "agentDisabled": "已停用 {{agent}}",
-    "updateFailed": "更新 {{agent}} 失敗",
-    "bulkUpdateFailed": "部分代理更新失敗"
+    "updateFailed": "更新 {{agent}} 失敗"
   },
   "summary": {
     "title": "擴充",

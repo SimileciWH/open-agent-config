@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -101,7 +101,11 @@ function validateIdentity() {
   for (const path of trackedAndUntrackedFiles()) {
     if (path === scriptPath) continue;
 
-    const buffer = readFileSync(resolve(root, path));
+    const absolutePath = resolve(root, path);
+    // Deleted tracked files remain in `git ls-files --cached` until commit.
+    if (!existsSync(absolutePath)) continue;
+
+    const buffer = readFileSync(absolutePath);
     if (buffer.includes(0)) continue;
 
     const lines = buffer.toString("utf8").split(/\r?\n/);

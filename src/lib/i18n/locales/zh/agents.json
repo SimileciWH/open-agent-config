@@ -2,19 +2,37 @@
   "list": {
     "header": "智能体",
     "notDetected": "未检测到",
-    "noDetected": "未检测到智能体"
+    "detected": "已检测到",
+    "disabled": "已禁用",
+    "all": "全部",
+    "detectedOnly": "已检测",
+    "filterAria": "筛选智能体",
+    "noneForFilter": "没有检测到智能体。切换到“全部”可查看所有受支持的智能体。",
+    "enableAria": "启用 {{agent}}",
+    "disableAria": "禁用 {{agent}}",
+    "reorderAria": "调整 {{agent}} 顺序"
   },
   "detail": {
     "selectAgent": "选择一个智能体以查看其配置",
+    "detected": "已检测到",
     "notDetected": "未检测到",
-    "addCustomPath": "添加自定义路径",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "addConfigLocation": "添加配置位置",
     "addCustomPathPlaceholder": "粘贴文件或文件夹路径...",
+    "defaultLocation": "默认 Agent 位置",
+    "locationUnavailable": "位置不可用",
+    "defaultLocationHint": "Adapter 会使用此位置进行检测和自动扫描。",
+    "notDetectedHint": "此位置中没有发现受支持的配置。如果配置位于其他位置，可在下方添加已有文件或文件夹。",
     "selectFile": "选择文件",
     "selectFolder": "选择文件夹",
     "browseFile": "浏览文件...",
     "browseFolder": "浏览文件夹...",
     "add": "添加",
-    "emptyForScope": "{{agent}} 在 {{scope}} 中没有配置"
+    "noConfigDetected": "未检测到配置",
+    "noConfigDetectedHint": "即使尚未安装，该智能体也可以保持启用。只有当配置文件确实位于默认位置之外时，才需要添加配置位置。",
+    "emptyForScope": "{{agent}} 在 {{scope}} 中没有配置",
+    "emptyForScopeHint": "可以切换作用域，或添加已有配置文件或文件夹。"
   },
   "file": {
     "missing": "丢失",
@@ -42,12 +60,9 @@
     "customPathUpdated": "已更新自定义路径",
     "customPathRemoved": "已移除自定义路径",
     "failedSaveOrder": "保存智能体排序失败",
-    "pathUpdated": "已更新 {{agent}} 路径",
-    "pathUpdateFailed": "更新 {{agent}} 路径失败",
     "agentEnabled": "已启用 {{agent}}",
     "agentDisabled": "已禁用 {{agent}}",
-    "updateFailed": "更新 {{agent}} 失败",
-    "bulkUpdateFailed": "部分智能体更新失败"
+    "updateFailed": "更新 {{agent}} 失败"
   },
   "summary": {
     "title": "扩展",

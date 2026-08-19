@@ -1,0 +1,41 @@
+{
+  "add": {
+    "title": "添加项目",
+    "description": "选择工作区文件夹或粘贴路径。Open Agent Config 会先扫描，再由你确认具体添加哪些项目。",
+    "chooseTitle": "选择工作区文件夹",
+    "chooseFolder": "选择工作区文件夹",
+    "chooseFolderHint": "递归查找 Git 仓库及带有受支持 Agent 标记的项目目录。",
+    "orPaste": "或粘贴路径",
+    "pastePath": "工作区或项目路径",
+    "placeholder": "/项目/工作区路径",
+    "scan": "扫描",
+    "noneFound": "此文件夹中没有发现受支持的项目。",
+    "resultsTitle": "发现项目",
+    "resultsSummary_one": "添加前请确认发现的 {{count}} 个项目。",
+    "resultsSummary_other": "添加前请确认发现的 {{count}} 个项目。",
+    "selectAll": "全选",
+    "clearAll": "清空",
+    "added": "已添加",
+    "selected_one": "已选择 {{count}} 个",
+    "selected_other": "已选择 {{count}} 个",
+    "addSelected": "添加所选（{{count}}）",
+    "allFailed": "所选项目均未能添加，请检查路径后重试。"
+  },
+  "manage": {
+    "title": "管理项目",
+    "description": "查看已登记项目，并移除不再使用的条目。",
+    "empty": "尚未添加项目。",
+    "missing": "路径不存在",
+    "removeAria": "移除 {{name}}",
+    "confirmRemove": "移除",
+    "filesStay": "移除项目只会取消登记，不会删除磁盘文件。"
+  },
+  "toast": {
+    "addedCount_one": "已添加 {{count}} 个项目",
+    "addedCount_other": "已添加 {{count}} 个项目",
+    "failedAdd_one": "{{count}} 个项目添加失败：{{paths}}",
+    "failedAdd_other": "{{count}} 个项目添加失败：{{paths}}",
+    "projectRemoved": "项目已移除",
+    "projectRemovedSwitched": "项目“{{name}}”已移除，作用域已切换到全局"
+  }
+}

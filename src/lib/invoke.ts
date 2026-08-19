@@ -287,8 +287,8 @@ export const api = {
     return transport("discover_projects", { rootPath });
   },
 
-  updateAgentPath(name: string, path: string | null): Promise<void> {
-    return transport("update_agent_path", { name, path });
+  selectProjectDirectory(): Promise<string | null> {
+    return transport("select_project_directory");
   },
 
   setAgentEnabled(name: string, enabled: boolean): Promise<void> {

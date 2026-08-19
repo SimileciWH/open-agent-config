@@ -110,6 +110,10 @@ pub fn build_router(state: WebState) -> Router {
         .route("/api/add_project", post(handlers::projects::add_project))
         .route("/api/remove_project", post(handlers::projects::remove_project))
         .route("/api/discover_projects", post(handlers::projects::discover_projects))
+        .route(
+            "/api/select_project_directory",
+            post(handlers::projects::select_project_directory),
+        )
         .route("/api/count_project_extensions", post(handlers::projects::count_project_extensions))
         // Marketplace
         .route("/api/search_marketplace", post(handlers::marketplace::search_marketplace))

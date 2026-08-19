@@ -1463,10 +1463,19 @@ pub fn skill_locations(
 }
 
 /// Discover projects under a root directory (max depth configurable).
-/// A project is a directory containing .claude/skills/, .mcp.json, or .claude/settings.json.
+/// A project is either a Git repository or a directory carrying a supported
+/// Agent's declared project marker.
 pub fn discover_projects(root: &Path, max_depth: usize) -> Vec<DiscoveredProject> {
     let mut projects = Vec::new();
-    discover_projects_recursive(root, max_depth, 0, &mut projects);
+    // Match add_project's canonical path contract so aliases such as macOS
+    // /tmp -> /private/tmp cannot reappear as duplicate candidates.
+    let canonical_root = std::fs::canonicalize(root).unwrap_or_else(|_| root.to_path_buf());
+    let markers: Vec<_> = crate::adapter::all_adapters()
+        .into_iter()
+        .flat_map(|adapter| adapter.project_markers())
+        .collect();
+    discover_projects_recursive(&canonical_root, max_depth, 0, &markers, &mut projects);
+    projects.sort_by(|a, b| a.path.cmp(&b.path));
     projects
 }
 
@@ -1495,12 +1504,21 @@ pub fn is_git_repository(dir: &Path) -> bool {
 /// discovery (`discover_projects`) and the `add_project` validation in
 /// oac-desktop / oac-web.
 pub fn is_project_dir(dir: &Path) -> bool {
+    let markers: Vec<_> = crate::adapter::all_adapters()
+        .into_iter()
+        .flat_map(|adapter| adapter.project_markers())
+        .collect();
+    is_project_dir_with_markers(dir, &markers)
+}
+
+fn is_project_dir_with_markers(
+    dir: &Path,
+    markers: &[crate::adapter::ProjectMarker],
+) -> bool {
     is_git_repository(dir)
-        || crate::adapter::all_adapters().iter().any(|a| {
-            a.project_markers().iter().any(|m| match m {
-                crate::adapter::ProjectMarker::Dir(p) => dir.join(p).is_dir(),
-                crate::adapter::ProjectMarker::File(p) => dir.join(p).is_file(),
-            })
+        || markers.iter().any(|marker| match marker {
+            crate::adapter::ProjectMarker::Dir(path) => dir.join(path).is_dir(),
+            crate::adapter::ProjectMarker::File(path) => dir.join(path).is_file(),
         })
 }
 
@@ -1508,13 +1526,14 @@ fn discover_projects_recursive(
     dir: &Path,
     max_depth: usize,
     current_depth: usize,
+    markers: &[crate::adapter::ProjectMarker],
     projects: &mut Vec<DiscoveredProject>,
 ) {
     if current_depth > max_depth {
         return;
     }
 
-    if is_project_dir(dir) {
+    if is_project_dir_with_markers(dir, markers) {
         let name = dir
             .file_name()
             .unwrap_or_default()
@@ -1534,7 +1553,10 @@ fn discover_projects_recursive(
     };
     for entry in entries.flatten() {
         let path = entry.path();
-        if !path.is_dir() {
+        let Ok(file_type) = entry.file_type() else {
+            continue;
+        };
+        if !file_type.is_dir() || file_type.is_symlink() {
             continue;
         }
 
@@ -1560,7 +1582,13 @@ fn discover_projects_recursive(
             continue;
         }
 
-        discover_projects_recursive(&path, max_depth, current_depth + 1, projects);
+        discover_projects_recursive(
+            &path,
+            max_depth,
+            current_depth + 1,
+            markers,
+            projects,
+        );
     }
 }
 
@@ -2820,6 +2848,22 @@ mod tests {
         assert!(names.contains(&"project-i"));
         assert!(names.contains(&"project-j"));
         assert!(!names.contains(&"github-repo"));
+    }
+
+    #[test]
+    fn test_discover_projects_returns_canonical_paths() {
+        let root = TempDir::new().unwrap();
+        let project = root.path().join("project-a");
+        std::fs::create_dir_all(project.join(".git")).unwrap();
+
+        let aliased_root = root.path().join(".");
+        let discovered = discover_projects(&aliased_root, 1);
+
+        assert_eq!(discovered.len(), 1);
+        assert_eq!(
+            std::path::Path::new(&discovered[0].path),
+            project.canonicalize().unwrap()
+        );
     }
 
     #[test]

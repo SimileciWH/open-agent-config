@@ -35,7 +35,7 @@ describe("ScopeSwitcher", () => {
   it("opens dropdown on click", () => {
     renderSwitcher();
     fireEvent.click(screen.getByRole("button", { name: /switch scope/i }));
-    expect(screen.getByRole("listbox")).toBeTruthy();
+    expect(screen.getByRole("menu")).toBeTruthy();
   });
 
   it("hides 'All scopes' entry when no projects exist", () => {
@@ -88,16 +88,16 @@ describe("ScopeSwitcher", () => {
   it("Escape closes dropdown", () => {
     renderSwitcher();
     fireEvent.click(screen.getByRole("button", { name: /switch scope/i }));
-    expect(screen.getByRole("listbox")).toBeTruthy();
+    expect(screen.getByRole("menu")).toBeTruthy();
     fireEvent.keyDown(document, { key: "Escape" });
-    expect(screen.queryByRole("listbox")).toBeNull();
+    expect(screen.queryByRole("menu")).toBeNull();
   });
 
   it("clicking outside closes dropdown", () => {
     renderSwitcher();
     fireEvent.click(screen.getByRole("button", { name: /switch scope/i }));
     fireEvent.mouseDown(document.body);
-    expect(screen.queryByRole("listbox")).toBeNull();
+    expect(screen.queryByRole("menu")).toBeNull();
   });
 
   it("ArrowDown moves active option, Enter selects", () => {
@@ -122,5 +122,36 @@ describe("ScopeSwitcher", () => {
     fireEvent.keyDown(document, { key: "ArrowDown" });
     fireEvent.keyDown(document, { key: "Enter" });
     expect(useScopeStore.getState().current.type).toBe("global");
+  });
+
+  it("opens Add Project in place instead of navigating to Settings", () => {
+    renderSwitcher();
+    fireEvent.click(screen.getByRole("button", { name: /switch scope/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /add project/i }));
+    expect(
+      screen.getByRole("dialog", { name: /add projects/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+
+  it("shows project management only when projects exist", () => {
+    useProjectStore.setState({
+      projects: [
+        {
+          id: "alpha",
+          name: "alpha",
+          path: "/p/alpha",
+          created_at: "",
+          exists: true,
+        },
+      ],
+      loading: false,
+    });
+    renderSwitcher();
+    fireEvent.click(screen.getByRole("button", { name: /switch scope/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /manage projects/i }));
+    expect(
+      screen.getByRole("dialog", { name: /manage projects/i }),
+    ).toBeInTheDocument();
   });
 });

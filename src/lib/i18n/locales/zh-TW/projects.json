@@ -1,0 +1,41 @@
+{
+  "add": {
+    "title": "新增專案",
+    "description": "選擇工作區資料夾或貼上路徑。Open Agent Config 會先掃描，再由你確認要新增哪些專案。",
+    "chooseTitle": "選擇工作區資料夾",
+    "chooseFolder": "選擇工作區資料夾",
+    "chooseFolderHint": "遞迴尋找 Git 儲存庫及帶有受支援 Agent 標記的專案目錄。",
+    "orPaste": "或貼上路徑",
+    "pastePath": "工作區或專案路徑",
+    "placeholder": "/專案/工作區路徑",
+    "scan": "掃描",
+    "noneFound": "此資料夾中沒有找到受支援的專案。",
+    "resultsTitle": "找到專案",
+    "resultsSummary_one": "新增前請確認找到的 {{count}} 個專案。",
+    "resultsSummary_other": "新增前請確認找到的 {{count}} 個專案。",
+    "selectAll": "全選",
+    "clearAll": "清除",
+    "added": "已新增",
+    "selected_one": "已選擇 {{count}} 個",
+    "selected_other": "已選擇 {{count}} 個",
+    "addSelected": "新增所選（{{count}}）",
+    "allFailed": "所選專案均未能新增，請檢查路徑後再試一次。"
+  },
+  "manage": {
+    "title": "管理專案",
+    "description": "檢視已登記的專案，並移除不再使用的項目。",
+    "empty": "尚未新增專案。",
+    "missing": "路徑不存在",
+    "removeAria": "移除 {{name}}",
+    "confirmRemove": "移除",
+    "filesStay": "移除專案只會取消登記，不會刪除磁碟檔案。"
+  },
+  "toast": {
+    "addedCount_one": "已新增 {{count}} 個專案",
+    "addedCount_other": "已新增 {{count}} 個專案",
+    "failedAdd_one": "{{count}} 個專案新增失敗：{{paths}}",
+    "failedAdd_other": "{{count}} 個專案新增失敗：{{paths}}",
+    "projectRemoved": "專案已移除",
+    "projectRemovedSwitched": "專案「{{name}}」已移除，作用域已切換至全域"
+  }
+}

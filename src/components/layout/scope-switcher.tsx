@@ -2,6 +2,10 @@ import { clsx } from "clsx";
 import { ChevronDown, Folder } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  AddProjectDialog,
+  ManageProjectsDialog,
+} from "@/components/projects/project-dialogs";
 import { useScope } from "@/hooks/use-scope";
 import type { ScopeValue } from "@/stores/scope-store";
 import { ScopeSwitcherMenu } from "./scope-switcher-menu";
@@ -14,6 +18,7 @@ export function ScopeSwitcher({
   const { t } = useTranslation("common");
   const { scope } = useScope();
   const [open, setOpen] = useState(false);
+  const [dialog, setDialog] = useState<"add" | "manage" | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const scopeLabel = (s: ScopeValue): string => {
@@ -48,7 +53,7 @@ export function ScopeSwitcher({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-haspopup="listbox"
+        aria-haspopup="menu"
         aria-expanded={open}
         aria-label={t("scope.switchAria", { label })}
         className={clsx(
@@ -69,8 +74,20 @@ export function ScopeSwitcher({
       {open && (
         <ScopeSwitcherMenu
           onClose={() => setOpen(false)}
+          onAddProject={() => {
+            setOpen(false);
+            setDialog("add");
+          }}
+          onManageProjects={() => {
+            setOpen(false);
+            setDialog("manage");
+          }}
           placement={placement}
         />
+      )}
+      {dialog === "add" && <AddProjectDialog onClose={() => setDialog(null)} />}
+      {dialog === "manage" && (
+        <ManageProjectsDialog onClose={() => setDialog(null)} />
       )}
     </div>
   );

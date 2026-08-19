@@ -10,7 +10,6 @@ const PAGE_KEYS = [
   "kits",
   "audit",
   "marketplace",
-  "settings",
 ] as const;
 type PageKey = (typeof PAGE_KEYS)[number];
 

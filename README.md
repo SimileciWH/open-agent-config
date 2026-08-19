@@ -29,7 +29,7 @@
 </p>
 
 <p align="center">
-  <small><i>Every supported agent shows on the Overview by default, installed or not. In Settings → Agent Paths, switch to "Detected only" to hide and disable undetected agents, or flip a single agent's "Enabled" toggle off.</i></small>
+  <small><i>Every supported agent is available from Agents. Use All / Detected to filter the list without changing enablement, and use each Agent's row switch when you explicitly want to enable or disable it.</i></small>
 </p>
 
 <br/>
@@ -220,6 +220,23 @@ This makes Open Agent Config usable on **Linux servers**, **HPC clusters**, or a
 **Requirements:** At least one supported AI coding agent installed.
 
 > **Release status:** OAC's binary installers and in-app updater are intentionally disabled until this repository owns verified release artifacts, checksums, and signing keys. Build from source for now.
+
+### 🧑‍💻 Source Development (One Command)
+
+Install dependencies once, then start the Rust API and Vite frontend together:
+
+```bash
+npm ci
+npm run dev
+```
+
+Open `http://localhost:1420`. The development launcher starts the local-only OAC backend on port `7070`, waits for it to become ready, and then starts Vite. Press `Ctrl+C` once to stop both processes. The launcher uses `--no-token`, so use it only on a trusted single-user development machine.
+
+Tauri development remains separate because the desktop shell uses IPC rather than the Web API:
+
+```bash
+cargo tauri dev
+```
 
 ### 🖥️ Desktop App (macOS)
 

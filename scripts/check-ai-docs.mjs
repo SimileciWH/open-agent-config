@@ -18,7 +18,7 @@ function repositoryFiles() {
   return execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], { cwd: root, encoding: "utf8" })
     .split("\n")
     .map((value) => value.trim())
-    .filter(Boolean);
+    .filter((file) => file && existsSync(resolve(root, file)));
 }
 
 const files = repositoryFiles();

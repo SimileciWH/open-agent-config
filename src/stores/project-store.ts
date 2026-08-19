@@ -12,8 +12,20 @@ interface ProjectState {
   loaded: boolean;
 
   loadProjects: () => Promise<void>;
-  addProject: (path: string) => Promise<void>;
+  addProjects: (paths: string[]) => Promise<{
+    added: Project[];
+    failed: Array<{ path: string; error: unknown }>;
+  }>;
   removeProject: (id: string) => Promise<void>;
+}
+
+async function refreshExtensions() {
+  try {
+    await api.scanAndSync();
+  } catch (e) {
+    console.error("Failed to scan after changing projects:", e);
+  }
+  await useExtensionStore.getState().fetch();
 }
 
 export const useProjectStore = create<ProjectState>((set, get) => ({
@@ -32,19 +44,28 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     }
   },
 
-  async addProject(path: string) {
-    const project = await api.addProject(path);
-    set((s) => ({ projects: [...s.projects, project] }));
-    // Discover the new project's extensions and refresh the in-memory
-    // list. Without this, web-mode users see no extensions for the
-    // newly-added project until they refresh the page (desktop relies on
-    // the Tauri `extensions-changed` event, which has no web equivalent).
-    try {
-      await api.scanAndSync();
-    } catch (e) {
-      console.error("Failed to scan after adding project:", e);
+  async addProjects(paths: string[]) {
+    const added: Project[] = [];
+    const failed: Array<{ path: string; error: unknown }> = [];
+    for (const path of paths) {
+      try {
+        added.push(await api.addProject(path));
+      } catch (error) {
+        failed.push({ path, error });
+      }
     }
-    await useExtensionStore.getState().fetch();
+
+    if (added.length > 0) {
+      set((state) => {
+        const byId = new Map(
+          state.projects.map((project) => [project.id, project]),
+        );
+        for (const project of added) byId.set(project.id, project);
+        return { projects: [...byId.values()] };
+      });
+      await refreshExtensions();
+    }
+    return { added, failed };
   },
 
   async removeProject(id: string) {
@@ -56,7 +77,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       if (scope.type === "project" && scope.path === project.path) {
         useScopeStore.getState().setScope({ type: "global" });
         toast.warning(
-          i18n.t("settings:projectPaths.toast.projectRemovedSwitched", {
+          i18n.t("projects:toast.projectRemovedSwitched", {
             name: project.name,
           }),
         );

@@ -1,0 +1,41 @@
+{
+  "add": {
+    "title": "Add projects",
+    "description": "Choose a workspace folder or paste a path. Open Agent Config scans it first, then lets you confirm exactly which projects to add.",
+    "chooseTitle": "Choose a workspace folder",
+    "chooseFolder": "Choose workspace folder",
+    "chooseFolderHint": "Recursively find Git repositories and supported Agent project folders.",
+    "orPaste": "Or paste a path",
+    "pastePath": "Workspace or project path",
+    "placeholder": "/path/to/workspace",
+    "scan": "Scan",
+    "noneFound": "No supported projects were found in this folder.",
+    "resultsTitle": "Projects found",
+    "resultsSummary_one": "Review {{count}} detected project before adding it.",
+    "resultsSummary_other": "Review {{count}} detected projects before adding them.",
+    "selectAll": "Select all",
+    "clearAll": "Clear all",
+    "added": "Added",
+    "selected_one": "{{count}} selected",
+    "selected_other": "{{count}} selected",
+    "addSelected": "Add selected ({{count}})",
+    "allFailed": "None of the selected projects could be added. Check the paths and try again."
+  },
+  "manage": {
+    "title": "Manage projects",
+    "description": "Review registered projects and remove entries you no longer use.",
+    "empty": "No projects have been added yet.",
+    "missing": "Missing",
+    "removeAria": "Remove {{name}}",
+    "confirmRemove": "Remove",
+    "filesStay": "Removing a project never deletes files from disk."
+  },
+  "toast": {
+    "addedCount_one": "{{count}} project added",
+    "addedCount_other": "{{count}} projects added",
+    "failedAdd_one": "Failed to add {{count}} project: {{paths}}",
+    "failedAdd_other": "Failed to add {{count}} projects: {{paths}}",
+    "projectRemoved": "Project removed",
+    "projectRemovedSwitched": "Project '{{name}}' was removed; scope switched to Global"
+  }
+}

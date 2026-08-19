@@ -6,6 +6,8 @@ use oac_core::kits::project_summary::{
 use oac_core::models::{DiscoveredProject, Project};
 use oac_core::scanner;
 use serde::Deserialize;
+use std::path::Path;
+use std::process::{Command, Output};
 
 use crate::router::{blocking, ApiError};
 use crate::state::WebState;
@@ -133,6 +135,223 @@ pub async fn discover_projects(
                 "Not a directory: {}", params.root_path
             )));
         }
-        Ok(scanner::discover_git_repositories(root, 12))
+        Ok(scanner::discover_projects(root, 12))
     }).await
+}
+
+/// Open the host operating system's native folder picker for local Web mode.
+/// Tauri uses its dialog plugin directly; Web needs the backend because normal
+/// browser APIs intentionally do not expose an absolute filesystem path.
+pub async fn select_project_directory() -> Result<Option<String>> {
+    blocking(select_project_directory_native).await
+}
+
+fn selected_directory_from_output(
+    stdout: &[u8],
+) -> std::result::Result<Option<String>, oac_core::OacError> {
+    let output = String::from_utf8_lossy(stdout);
+    let selected = output.trim_end_matches(['\r', '\n']);
+    if selected.is_empty() {
+        return Ok(None);
+    }
+
+    let canonical = Path::new(selected).canonicalize().map_err(|error| {
+        oac_core::OacError::CommandFailed(format!(
+            "The selected folder could not be resolved: {error}"
+        ))
+    })?;
+    if !canonical.is_dir() {
+        return Err(oac_core::OacError::Validation(
+            "The selected path is not a directory".into(),
+        ));
+    }
+
+    Ok(Some(
+        super::normalize(&canonical).to_string_lossy().to_string(),
+    ))
+}
+
+fn picker_command_failed(program: &str, output: &Output) -> oac_core::OacError {
+    let detail = String::from_utf8_lossy(&output.stderr);
+    let detail = detail.trim();
+    let message = if detail.is_empty() {
+        format!("{program} exited with status {}", output.status)
+    } else {
+        format!("{program} failed: {detail}")
+    };
+    oac_core::OacError::CommandFailed(message)
+}
+
+#[cfg(any(target_os = "macos", test))]
+fn select_project_directory_macos() -> std::result::Result<Option<String>, oac_core::OacError> {
+    let output = Command::new("/usr/bin/osascript")
+        .args([
+            "-e",
+            r#"tell application "Finder""#,
+            "-e",
+            "activate",
+            "-e",
+            r#"POSIX path of (choose folder with prompt "Choose a workspace folder")"#,
+            "-e",
+            "end tell",
+        ])
+        .output()
+        .map_err(|error| {
+            oac_core::OacError::CommandFailed(format!(
+                "Could not launch the macOS folder picker: {error}"
+            ))
+        })?;
+
+    if output.status.success() {
+        return selected_directory_from_output(&output.stdout);
+    }
+    if String::from_utf8_lossy(&output.stderr).contains("(-128)") {
+        return Ok(None);
+    }
+    Err(picker_command_failed("osascript", &output))
+}
+
+#[cfg(any(target_os = "windows", test))]
+fn select_project_directory_windows() -> std::result::Result<Option<String>, oac_core::OacError> {
+    const SCRIPT: &str = r#"
+Add-Type -AssemblyName System.Windows.Forms
+$dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+$dialog.Description = 'Choose a workspace folder'
+$dialog.ShowNewFolderButton = $false
+if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+  [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+  [Console]::Out.Write($dialog.SelectedPath)
+}
+"#;
+
+    let output = Command::new("powershell.exe")
+        .args(["-NoLogo", "-NoProfile", "-STA", "-Command", SCRIPT])
+        .output()
+        .map_err(|error| {
+            oac_core::OacError::CommandFailed(format!(
+                "Could not launch the Windows folder picker: {error}"
+            ))
+        })?;
+
+    if output.status.success() {
+        selected_directory_from_output(&output.stdout)
+    } else {
+        Err(picker_command_failed("powershell.exe", &output))
+    }
+}
+
+#[cfg(any(target_os = "linux", test))]
+fn select_project_directory_linux() -> std::result::Result<Option<String>, oac_core::OacError> {
+    let candidates: [(&str, &[&str]); 3] = [
+        (
+            "zenity",
+            &[
+                "--file-selection",
+                "--directory",
+                "--title=Choose a workspace folder",
+            ],
+        ),
+        (
+            "yad",
+            &[
+                "--file-selection",
+                "--directory",
+                "--title=Choose a workspace folder",
+            ],
+        ),
+        (
+            "kdialog",
+            &[
+                "--getexistingdirectory",
+                ".",
+                "--title",
+                "Choose a workspace folder",
+            ],
+        ),
+    ];
+    let mut last_failure = None;
+
+    for (program, args) in candidates {
+        let output = match Command::new(program).args(args).output() {
+            Ok(output) => output,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(error) => {
+                return Err(oac_core::OacError::CommandFailed(format!(
+                    "Could not launch {program}: {error}"
+                )));
+            }
+        };
+
+        if output.status.success() {
+            return selected_directory_from_output(&output.stdout);
+        }
+        if output.status.code() == Some(1) && output.stderr.is_empty() {
+            return Ok(None);
+        }
+        last_failure = Some(picker_command_failed(program, &output));
+    }
+
+    Err(last_failure.unwrap_or_else(|| {
+        oac_core::OacError::CommandFailed(
+            "No native folder picker is available. Install zenity, yad, or kdialog, or paste the path instead."
+                .into(),
+        )
+    }))
+}
+
+#[cfg(target_os = "macos")]
+fn select_project_directory_native() -> std::result::Result<Option<String>, oac_core::OacError> {
+    select_project_directory_macos()
+}
+
+#[cfg(target_os = "windows")]
+fn select_project_directory_native() -> std::result::Result<Option<String>, oac_core::OacError> {
+    select_project_directory_windows()
+}
+
+#[cfg(target_os = "linux")]
+fn select_project_directory_native() -> std::result::Result<Option<String>, oac_core::OacError> {
+    select_project_directory_linux()
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+fn select_project_directory_native() -> std::result::Result<Option<String>, oac_core::OacError> {
+    Err(oac_core::OacError::CommandFailed(
+        "Native folder selection is not supported on this operating system; paste the path instead."
+            .into(),
+    ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::selected_directory_from_output;
+    use std::path::Path;
+
+    #[test]
+    fn all_platform_picker_implementations_typecheck() {
+        let _macos = super::select_project_directory_macos;
+        let _windows = super::select_project_directory_windows;
+        let _linux = super::select_project_directory_linux;
+    }
+
+    #[test]
+    fn empty_picker_output_is_a_cancel() {
+        assert_eq!(selected_directory_from_output(b"\n").unwrap(), None);
+    }
+
+    #[test]
+    fn picker_output_is_canonicalized_and_keeps_spaces() {
+        let root = tempfile::tempdir().unwrap();
+        let selected = root.path().join("workspace with spaces");
+        std::fs::create_dir_all(&selected).unwrap();
+        let raw = format!("{}\n", selected.display());
+
+        let result = selected_directory_from_output(raw.as_bytes())
+            .unwrap()
+            .expect("selected path");
+        assert_eq!(
+            Path::new(&result),
+            super::super::normalize(&selected.canonicalize().unwrap())
+        );
+    }
 }

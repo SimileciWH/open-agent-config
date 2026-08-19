@@ -18,13 +18,18 @@ pub async fn list_agents(
         let order_map: std::collections::HashMap<String, i32> = db_order.into_iter().collect();
         let mut result = Vec::new();
         for a in state.adapters.iter() {
-            let (custom_path, enabled) = store.get_agent_setting(a.name()).unwrap_or((None, true));
-            let path = custom_path.unwrap_or_else(|| a.base_dir().to_string_lossy().to_string());
+            let enabled = store
+                .get_agent_setting(a.name())
+                .map(|(_, enabled)| enabled)
+                .unwrap_or(true);
             result.push(AgentInfo {
                 name: a.name().to_string(),
                 detected: a.detect(),
                 extension_count: 0,
-                path,
+                // The adapter path is the actual detection/scanning source of
+                // truth. Legacy custom_path records are retained in SQLite for
+                // compatibility but must not be presented as active overrides.
+                path: a.base_dir().to_string_lossy().to_string(),
                 enabled,
                 capabilities: AgentCapabilities::from_adapter(a.as_ref()),
             });
@@ -240,4 +245,3 @@ pub async fn remove_custom_config_path(
         Ok(())
     }).await
 }
-

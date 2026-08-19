@@ -21,21 +21,27 @@ import { GripVertical } from "lucide-react";
 import { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { AgentMascot } from "@/components/shared/agent-mascot/agent-mascot";
-import type { AgentDetail } from "@/lib/types";
+import type { AgentDetail, AgentInfo } from "@/lib/types";
 import { agentDisplayName } from "@/lib/types";
 import { useAgentConfigStore } from "@/stores/agent-config-store";
 import { useAgentStore } from "@/stores/agent-store";
+import { useUIStore } from "@/stores/ui-store";
 
 function SortableAgentItem({
   agent,
+  info,
   isSelected,
   onSelect,
+  onEnabledChange,
 }: {
   agent: AgentDetail;
+  info: AgentInfo | undefined;
   isSelected: boolean;
   onSelect: () => void;
+  onEnabledChange: (enabled: boolean) => void;
 }) {
   const { t } = useTranslation("agents");
+  const enabled = info?.enabled ?? true;
   const {
     attributes,
     listeners,
@@ -49,44 +55,84 @@ function SortableAgentItem({
     transform: CSS.Transform.toString(transform),
     transition,
   };
+  const status = !agent.detected
+    ? t("list.notDetected")
+    : enabled
+      ? t("list.detected")
+      : t("list.disabled");
 
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={clsx(
-        "flex items-center rounded-lg transition-colors",
-        isDragging && "opacity-50 z-10",
+        "group flex items-center rounded-xl border border-transparent transition-colors",
+        isDragging && "z-10 opacity-50",
         isSelected
-          ? "bg-accent text-accent-foreground"
-          : agent.detected
-            ? "text-foreground/80 hover:bg-accent/50"
-            : "text-muted-foreground/50",
+          ? "border-primary/15 bg-accent text-accent-foreground"
+          : "text-foreground/80 hover:bg-accent/45",
+        !enabled && "opacity-65",
       )}
     >
-      <div
-        className="flex items-center justify-center w-6 shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground/30 hover:text-muted-foreground/60"
+      <button
+        type="button"
+        aria-label={t("list.reorderAria", {
+          agent: agentDisplayName(agent.name),
+        })}
+        className="flex w-6 shrink-0 cursor-grab items-center justify-center self-stretch text-muted-foreground/30 hover:text-muted-foreground/65 active:cursor-grabbing"
         {...attributes}
         {...listeners}
       >
         <GripVertical size={14} />
-      </div>
+      </button>
       <button
+        type="button"
         onClick={onSelect}
-        disabled={!agent.detected}
-        className="flex items-center gap-2 flex-1 py-2.5 pr-3 text-left"
+        className="flex min-w-0 flex-1 items-center gap-2 py-2.5 pr-1 text-left"
       >
         <AgentMascot name={agent.name} size={18} />
-        <div className="min-w-0">
-          <span className="block text-[13px] font-medium">
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[13px] font-semibold">
             {agentDisplayName(agent.name)}
           </span>
-          {!agent.detected && (
-            <span className="block text-[10px] text-muted-foreground leading-tight">
-              {t("list.notDetected")}
-            </span>
+          <span
+            className={clsx(
+              "block text-[10px] leading-tight",
+              agent.detected && enabled
+                ? "text-emerald-600 dark:text-emerald-300"
+                : "text-muted-foreground",
+            )}
+          >
+            {status}
+          </span>
+        </span>
+      </button>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={enabled}
+        aria-label={t(enabled ? "list.disableAria" : "list.enableAria", {
+          agent: agentDisplayName(agent.name),
+        })}
+        title={t(enabled ? "list.disableAria" : "list.enableAria", {
+          agent: agentDisplayName(agent.name),
+        })}
+        onClick={() => onEnabledChange(!enabled)}
+        className="mr-2 shrink-0 rounded-full p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      >
+        <span
+          className={clsx(
+            "relative block h-4 w-7 rounded-full transition-colors",
+            enabled ? "bg-primary" : "bg-muted-foreground/25",
           )}
-        </div>
+        >
+          <span
+            className={clsx(
+              "absolute top-0.5 h-3 w-3 rounded-full bg-white shadow-sm transition-transform",
+              enabled ? "translate-x-3.5" : "translate-x-0.5",
+            )}
+          />
+        </span>
       </button>
     </div>
   );
@@ -100,7 +146,14 @@ export function AgentList() {
   const agentOrder = useAgentStore((s) => s.agentOrder);
   const reorderAgents = useAgentStore((s) => s.reorderAgents);
   const agents = useAgentStore((s) => s.agents);
+  const setEnabled = useAgentStore((s) => s.setEnabled);
+  const agentVisibility = useUIStore((s) => s.agentVisibility);
+  const setAgentVisibility = useUIStore((s) => s.setAgentVisibility);
 
+  const infoByName = useMemo(
+    () => new Map(agents.map((agent) => [agent.name, agent])),
+    [agents],
+  );
   const sorted = useMemo(
     () =>
       [...agentDetails].sort((a, b) => {
@@ -110,38 +163,36 @@ export function AgentList() {
       }),
     [agentDetails, agentOrder],
   );
-
-  // A disabled agent (including ones "Detected only" auto-disabled) is hidden
-  // from the sidebar. AgentDetail doesn't carry enabled state, so cross-
-  // reference the agent store; default to visible when an agent is unknown
-  // (store not loaded yet) so the list never flashes empty.
-  const disabledNames = useMemo(
-    () => new Set(agents.filter((a) => !a.enabled).map((a) => a.name)),
-    [agents],
-  );
-
   const visible = useMemo(
-    () => sorted.filter((a) => !disabledNames.has(a.name)),
-    [sorted, disabledNames],
+    () =>
+      agentVisibility === "detected"
+        ? sorted.filter((agent) => agent.detected)
+        : sorted,
+    [agentVisibility, sorted],
   );
-
-  const hidden = useMemo(
+  const visibleNames = useMemo(
+    () => new Set(visible.map((agent) => agent.name)),
+    [visible],
+  );
+  const hiddenNames = useMemo(
     () =>
       new Set(
-        sorted.filter((a) => disabledNames.has(a.name)).map((a) => a.name),
+        sorted
+          .filter((agent) => !visibleNames.has(agent.name))
+          .map((agent) => agent.name),
       ),
-    [sorted, disabledNames],
+    [sorted, visibleNames],
   );
 
-  // Keep the selection on a visible agent — if the selected one gets hidden
-  // (disabled), fall back to the first visible, or clear it.
   useEffect(() => {
-    if (!selectedAgent) return;
-    const isSelectedVisible = visible.some((a) => a.name === selectedAgent);
-    if (!isSelectedVisible) {
-      selectAgent(visible.length > 0 ? visible[0].name : null);
+    if (visible.length === 0) {
+      if (selectedAgent) selectAgent(null);
+      return;
     }
-  }, [visible, selectedAgent, selectAgent]);
+    if (!selectedAgent || !visibleNames.has(selectedAgent)) {
+      selectAgent(visible[0]?.name ?? null);
+    }
+  }, [selectAgent, selectedAgent, visible, visibleNames]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -155,79 +206,94 @@ export function AgentList() {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
-      const visibleNames = visible.map((a) => a.name);
-      const oldIndex = visibleNames.indexOf(active.id as string);
-      const newIndex = visibleNames.indexOf(over.id as string);
+      const displayedNames = visible.map((agent) => agent.name);
+      const oldIndex = displayedNames.indexOf(active.id as string);
+      const newIndex = displayedNames.indexOf(over.id as string);
       if (oldIndex === -1 || newIndex === -1) return;
 
-      const reorderedVisible = arrayMove(visibleNames, oldIndex, newIndex);
-
-      let fullOrder: string[];
-      if (hidden.size === 0) {
-        fullOrder = reorderedVisible;
-      } else {
-        const result: string[] = [];
-        let vi = 0;
-        for (const name of agentOrder) {
-          if (hidden.has(name)) {
-            result.push(name);
-          } else {
-            if (vi < reorderedVisible.length) {
-              result.push(reorderedVisible[vi]);
-              vi++;
-            }
-          }
+      const reorderedVisible = arrayMove(displayedNames, oldIndex, newIndex);
+      const fullOrder: string[] = [];
+      let visibleIndex = 0;
+      for (const name of agentOrder) {
+        if (hiddenNames.has(name)) fullOrder.push(name);
+        else if (visibleIndex < reorderedVisible.length) {
+          fullOrder.push(reorderedVisible[visibleIndex]);
+          visibleIndex++;
         }
-        while (vi < reorderedVisible.length) {
-          result.push(reorderedVisible[vi]);
-          vi++;
-        }
-        fullOrder = result;
       }
-
+      while (visibleIndex < reorderedVisible.length) {
+        fullOrder.push(reorderedVisible[visibleIndex]);
+        visibleIndex++;
+      }
       reorderAgents(fullOrder);
     },
-    [visible, hidden, agentOrder, reorderAgents],
+    [agentOrder, hiddenNames, reorderAgents, visible],
   );
 
-  if (visible.length === 0) {
-    return (
-      <div className="flex flex-col gap-0.5 p-2">
-        <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {t("list.header")}
-        </div>
-        <div className="px-3 py-6 text-xs text-muted-foreground text-center">
-          {t("list.noDetected")}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col gap-0.5 p-2">
-      <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {t("list.header")}
-      </div>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        modifiers={[restrictToVerticalAxis]}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={visible.map((a) => a.name)}
-          strategy={verticalListSortingStrategy}
+    <div className="flex flex-col gap-1 p-2">
+      <div className="space-y-2 px-1 pb-2 pt-1">
+        <div className="flex items-center justify-between px-2">
+          <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+            {t("list.header")}
+          </span>
+          <span className="text-[10px] tabular-nums text-muted-foreground/70">
+            {visible.length}/{sorted.length}
+          </span>
+        </div>
+        <fieldset
+          aria-label={t("list.filterAria")}
+          className="grid grid-cols-2 rounded-lg bg-muted/60 p-0.5"
         >
-          {visible.map((agent) => (
-            <SortableAgentItem
-              key={agent.name}
-              agent={agent}
-              isSelected={agent.name === selectedAgent}
-              onSelect={() => selectAgent(agent.name)}
-            />
+          {(["all", "detected"] as const).map((visibility) => (
+            <button
+              key={visibility}
+              type="button"
+              aria-pressed={agentVisibility === visibility}
+              onClick={() => setAgentVisibility(visibility)}
+              className={clsx(
+                "rounded-md px-2 py-1.5 text-[10px] font-semibold transition-colors",
+                agentVisibility === visibility
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t(visibility === "all" ? "list.all" : "list.detectedOnly")}
+            </button>
           ))}
-        </SortableContext>
-      </DndContext>
+        </fieldset>
+      </div>
+
+      {visible.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-border px-3 py-7 text-center text-xs text-muted-foreground">
+          {t("list.noneForFilter")}
+        </div>
+      ) : (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          modifiers={[restrictToVerticalAxis]}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={visible.map((agent) => agent.name)}
+            strategy={verticalListSortingStrategy}
+          >
+            {visible.map((agent) => (
+              <SortableAgentItem
+                key={agent.name}
+                agent={agent}
+                info={infoByName.get(agent.name)}
+                isSelected={agent.name === selectedAgent}
+                onSelect={() => selectAgent(agent.name)}
+                onEnabledChange={(enabled) =>
+                  void setEnabled(agent.name, enabled)
+                }
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
+      )}
     </div>
   );
 }

@@ -2,11 +2,11 @@
 
 ## Verification context
 
-- Source commit: `f37cfb93920740d24dfcfb00581e95ecb1d4b608` (main-branch merge).
+- Source commit: `bc352a314ab14101bd518aae19de3350cbb98828` plus the current development-orchestration working tree.
 - Node: `v26.3.0`
 - npm: `11.16.0`
 - Rust: `rustc/cargo 1.97.1` from Homebrew
-- Result: all fifteen Golden QA cases answered with source anchors.
+- Result: all seventeen Golden QA cases answered with source anchors.
 
 ## Results
 
@@ -88,28 +88,39 @@ CLI listing and executable lookup both resolve from the embedded OAC registry, s
 
 Anchors: `crates/oac-core/src/marketplace.rs::list_cli_registry`, `crates/oac-core/src/marketplace.rs::get_embedded_cli_entry`, `src/pages/overview.tsx::fetchTips`.
 
-### Q-014 — Project path discovery
+### Q-014 — Project discovery and confirmation
 
-单路径添加保留 Git 仓库和 Agent marker 兼容性；选择工作区文件夹时，Web/Tauri handler 调用核心 `discover_git_repositories`，递归识别 `.git` 目录和 worktree `.git` 文件，跳过隐藏/依赖/构建目录和符号链接目录，并按路径稳定排序后交给前端批量确认。
+Add Project 位于 Topbar Scope 菜单，“选择工作区文件夹”和粘贴路径始终同时显示。Tauri 使用跨平台 dialog plugin；local Web 通过后端在 macOS 调 Finder、Windows 调 PowerShell `FolderBrowserDialog`、Linux 依次尝试 Zenity/Yad/KDialog，无图形或选择器不可用时显示错误并保留粘贴回退。所有入口都先调用核心 `discover_projects`，递归识别 Git 目录、worktree `.git` 文件和 Adapter project markers，跳过隐藏/依赖/构建目录与符号链接并稳定排序。弹窗默认选择新增项、禁用已登记项，`addProjects` 批量写入后只重扫一次；单个成功项目切到该 project，多个成功项目切到 All scopes。
 
-Anchors: `crates/oac-core/src/scanner.rs::discover_git_repositories`, `crates/oac-core/src/scanner.rs::is_git_repository`, `crates/oac-web/src/handlers/projects.rs::discover_projects`, `crates/oac-desktop/src/commands/projects.rs::discover_projects`, `src/pages/settings.tsx::handleBrowseProject`.
+Anchors: `crates/oac-core/src/scanner.rs::discover_projects`, `crates/oac-core/src/scanner.rs::discover_git_repositories`, `crates/oac-core/src/scanner.rs::is_git_repository`, `crates/oac-web/src/handlers/projects.rs::discover_projects`, `crates/oac-web/src/handlers/projects.rs::select_project_directory`, `crates/oac-desktop/src/commands/projects.rs::discover_projects`, `src/components/projects/project-dialogs.tsx::AddProjectDialog`, `src/stores/project-store.ts::addProjects`.
 
 ### Q-015 — Blue-white shell and compact preferences
 
-`AppShell`、Sidebar、Topbar 和 `QuickPreferences` 组成蓝白工作区；右上角常驻显示 `EN`、`简中`、`繁中`、太阳、月亮和 `auto`，其中 `auto` 同时恢复语言和外观的系统状态。设置页不再重复放置大块语言/外观/主题设置，主题只保留蓝白基础主题。
+`AppShell`、Sidebar、Topbar 和 `QuickPreferences` 组成蓝白工作区；右上角常驻显示 `EN`、`简中`、`繁中`、太阳、月亮和 `auto`，其中 `auto` 同时恢复语言和外观的系统状态。独立 Settings 导航和页面已删除，主题只保留蓝白基础主题。
 
 Anchors: `src/components/layout/app-shell.tsx::AppShell`, `src/components/layout/topbar.tsx::Topbar`, `src/components/layout/quick-preferences.tsx::QuickPreferences`, `src/stores/ui-store.ts::useUIStore`, `src/components/layout/__tests__/quick-preferences.test.tsx::auto restores both language and appearance system`.
+
+### Q-016 — One-command Web development
+
+`npm run dev` calls `startDevelopmentEnvironment`, which starts the loopback `oac-cli serve --no-token` backend, waits for `/api/server_info`, and only then starts Vite. The launcher and Vite share `OAC_BACKEND_PORT`/`OAC_FRONTEND_PORT`, and one shutdown path owns both child processes. Tauri calls `npm run dev:frontend` instead because desktop requests use IPC and do not need the Web API process.
+
+Anchors: `scripts/dev.mjs::startDevelopmentEnvironment`, `package.json::node scripts/dev.mjs`, `vite.config.ts::OAC_BACKEND_PORT`, `crates/oac-desktop/tauri.conf.json::npm run dev:frontend`.
+
+### Q-017 — Agent management after Settings removal
+
+Agent 的 `All / Detected` 过滤、行内启停和位置说明都在 Agents 页面。过滤器只改前端可见列表，不再暗中调用 enable/disable；未检测 Agent 在 All 下仍可选择。行内 switch 才写入 `agent_settings.enabled`。Web/Tauri `list_agents` 显示 `AgentAdapter::base_dir()` 这一真实检测/扫描来源；旧 `agent_settings.custom_path` 不再伪装成生效的根目录覆盖。真正会进入 Agent 配置列表的非默认文件或目录通过 `agentConfigStore.addCustomPath` 写入 `custom_config_paths`。旧 `#/settings` 只重定向到 Agents。
+
+Anchors: `src/App.tsx::Navigate to="/agents"`, `src/components/agents/agent-list.tsx::AgentList`, `src/components/agents/agent-detail.tsx::AgentDetail`, `src/stores/agent-config-store.ts::addCustomPath`, `crates/oac-web/src/handlers/agents.rs::list_agents`, `crates/oac-desktop/src/commands/agents.rs::list_agents`.
 
 ## Automated verification
 
 - `npm run check:release-channel` passed with the application update channel disabled and no upstream release source configured.
-- `npm run check:ai-docs` passed: 11 module cards and 370 indexed source/docs files.
-- Cold `npm ci` passed; `npm audit --audit-level=high` reports 0 vulnerabilities after removing the unused Puppeteer production dependency and applying non-major lockfile updates.
-- `npm test` passed: 35 files, 290 tests; `npm run lint` passed: 188 files.
-- `npm run build` passed with 2104 modules transformed; the existing 818.36 kB main-chunk warning and Node deprecation warning remain.
-- `cargo clippy --workspace --all-targets -- -D warnings` passed after clearing 16 pre-existing mechanical lints.
-- `cargo test --workspace` passed: oac-cli 17, oac-core 622, toggle integration 9, oac-desktop 3, oac-web unit 3, oac-web API 8, doctests 0 failures.
-- An isolated-home `oac status` smoke test created only `.open-agent-config`, `.open-agent-config.migration.lock`, and its SQLite files; the real user home was not touched.
+- `npm run check:oac-identity` passed with 66 legacy migration or upstream-guard lines allowlisted; the gate now ignores tracked files deleted in the current working tree. `npm run check:ai-docs` passed with 14 module cards and 382 indexed source/docs files.
+- `npm test` passed with 38 files and 299 tests; `npx tsc --noEmit` and `npm run lint` passed, with lint covering 193 files. The project dialog suite covers local Web host selection, Tauri dialog routing, pasted-path scanning and removal confirmation.
+- `npm run build` passed with 2106 modules transformed. The existing 819.71 kB main-chunk warning and Node `module.register()` deprecation warning remain.
+- `cargo test --workspace` passed with 667 tests across CLI, core, toggle integration, desktop and Web/API suites; `cargo clippy --workspace --all-targets -- -D warnings` passed. The Web tests compile all macOS, Windows and Linux picker implementations and cover cancel output plus canonical paths with spaces.
+- An isolated macOS Web run on ports `17071/1423` opened the frontmost Finder folder chooser, selected a two-project workspace, automatically scanned and selected both Git projects, batch-added them, and switched to All scopes. A second real chooser run verified Cancel returns without an error; pasted `/tmp` input remained usable and resolved to canonical `/private/tmp` projects marked Added/disabled.
+- The same browser run verified the Settings navigation is absent, legacy `#/settings` redirects to `#/agents?scope=all`, All/Detected is display-only, undetected Kimi remains selectable, and its real default adapter location is shown. No Vite overlay or browser console error was present.
+- One `Ctrl+C` released both launcher-owned ports. The isolated HOME, project fixtures, screenshots and browser session were then moved to the system Trash; the real HOME and real Agent configurations were not touched.
 - `git diff --check` passed.
-- `cargo fmt --all -- --check` still reports repository-wide pre-existing formatting drift; no full-tree formatter rewrite was applied.
-- Manual acceptance remains outside automation: launch the rebuilt desktop UI, verify the two OAC icon choices, exercise migration against a disposable copy of real legacy state, and validate signed packages when an OAC release/signing channel exists.
+- Tauri dialog runtime and native Windows/Linux Web picker execution remain outside this macOS Web acceptance run; their TypeScript/Rust paths are covered by frontend tests, cross-platform test compilation, workspace tests and Clippy.

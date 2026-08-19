@@ -2,19 +2,37 @@
   "list": {
     "header": "Agents",
     "notDetected": "Not detected",
-    "noDetected": "No detected agents"
+    "detected": "Detected",
+    "disabled": "Disabled",
+    "all": "All",
+    "detectedOnly": "Detected",
+    "filterAria": "Filter agents",
+    "noneForFilter": "No detected agents. Switch to All to view every supported agent.",
+    "enableAria": "Enable {{agent}}",
+    "disableAria": "Disable {{agent}}",
+    "reorderAria": "Reorder {{agent}}"
   },
   "detail": {
     "selectAgent": "Select an agent to view its configuration",
+    "detected": "Detected",
     "notDetected": "Not detected",
-    "addCustomPath": "Add Custom Path",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "addConfigLocation": "Add config location",
     "addCustomPathPlaceholder": "Paste a file or folder path...",
+    "defaultLocation": "Default Agent location",
+    "locationUnavailable": "Location unavailable",
+    "defaultLocationHint": "This adapter location is the source used for detection and automatic scanning.",
+    "notDetectedHint": "No supported configuration was found here. Add an existing config file or folder below if it lives elsewhere.",
     "selectFile": "Select file",
     "selectFolder": "Select folder",
     "browseFile": "Browse file...",
     "browseFolder": "Browse folder...",
     "add": "Add",
-    "emptyForScope": "{{agent}} has no configuration in {{scope}}"
+    "noConfigDetected": "No configuration detected",
+    "noConfigDetectedHint": "The Agent can remain enabled even when it is not installed. Add a real config location only if your files live outside the default location.",
+    "emptyForScope": "{{agent}} has no configuration in {{scope}}",
+    "emptyForScopeHint": "Switch scope or add an existing config file or folder."
   },
   "file": {
     "missing": "Missing",
@@ -42,12 +60,9 @@
     "customPathUpdated": "Custom path updated",
     "customPathRemoved": "Custom path removed",
     "failedSaveOrder": "Failed to save agent order",
-    "pathUpdated": "{{agent}} path updated",
-    "pathUpdateFailed": "Failed to update {{agent}} path",
     "agentEnabled": "{{agent}} enabled",
     "agentDisabled": "{{agent}} disabled",
-    "updateFailed": "Failed to update {{agent}}",
-    "bulkUpdateFailed": "Failed to update some agents"
+    "updateFailed": "Failed to update {{agent}}"
   },
   "summary": {
     "title": "Extensions",

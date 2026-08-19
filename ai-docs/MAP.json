@@ -5,13 +5,13 @@
     "lineage": "historical fork; see Git history for immutable upstream attribution",
     "fork": "SimileciWH/open-agent-config",
     "license": "Apache-2.0",
-    "baseline_commit": "f37cfb93920740d24dfcfb00581e95ecb1d4b608",
+    "baseline_commit": "bc352a314ab14101bd518aae19de3350cbb98828",
     "source_of_truth": "source code and tests"
   },
   "inventory": {
-    "source_files": 344,
+    "source_files": 347,
     "rust_files": 90,
-    "typescript_and_tsx_files": 160,
+    "typescript_and_tsx_files": 162,
     "workflow_files": 4,
     "frontend_root": "src",
     "rust_workspace_root": "crates"
@@ -58,6 +58,11 @@
       "id": "frontend",
       "path": "src/lib/transport.ts::transport",
       "flow": "Tauri IPC in desktop mode or POST /api/{command} in browser mode"
+    },
+    {
+      "id": "development",
+      "path": "scripts/dev.mjs::startDevelopmentEnvironment",
+      "flow": "npm run dev starts the loopback OAC Web API, waits for readiness, then starts Vite; Tauri starts only Vite"
     }
   ],
   "primary_flow": [
@@ -96,7 +101,8 @@
         "crates/oac-core/src/scanner.rs::scan_all",
         "crates/oac-core/src/scanner.rs::scan_adapter",
         "crates/oac-core/src/scanner.rs::skill_locations",
-        "crates/oac-core/src/scanner.rs::scan_mcp_servers"
+        "crates/oac-core/src/scanner.rs::scan_mcp_servers",
+        "crates/oac-core/src/scanner.rs::discover_projects"
       ],
       "consumers": ["store", "manager", "web extensions handler", "desktop extensions commands"]
     },
@@ -105,19 +111,22 @@
       "level": "L2",
       "status": "runtime-verified",
       "card": "modules/project-paths.md",
-      "sources": ["crates/oac-core/src/scanner.rs", "crates/oac-web/src/handlers/projects.rs", "crates/oac-desktop/src/commands/projects.rs", "src/lib/invoke.ts", "src/lib/dialog.ts", "src/lib/types.ts", "src/stores/project-store.ts", "src/pages/settings.tsx"],
+      "sources": ["crates/oac-core/src/scanner.rs", "crates/oac-web/src/handlers/projects.rs", "crates/oac-desktop/src/commands/projects.rs", "src/lib/invoke.ts", "src/lib/dialog.ts", "src/lib/types.ts", "src/stores/project-store.ts", "src/components/layout/scope-switcher.tsx", "src/components/layout/scope-switcher-menu.tsx", "src/components/projects/project-dialogs.tsx"],
       "anchors": [
+        "crates/oac-core/src/scanner.rs::discover_projects",
         "crates/oac-core/src/scanner.rs::discover_git_repositories",
         "crates/oac-core/src/scanner.rs::is_git_repository",
         "crates/oac-core/src/scanner.rs::is_project_dir",
         "crates/oac-web/src/handlers/projects.rs::discover_projects",
+        "crates/oac-web/src/handlers/projects.rs::select_project_directory",
         "crates/oac-desktop/src/commands/projects.rs::discover_projects",
         "src/lib/invoke.ts::discoverProjects",
-        "src/stores/project-store.ts::addProject",
-        "src/pages/settings.tsx::handleAddPath",
-        "src/pages/settings.tsx::handleBrowseProject"
+        "src/lib/invoke.ts::selectProjectDirectory",
+        "src/stores/project-store.ts::addProjects",
+        "src/components/projects/project-dialogs.tsx::AddProjectDialog",
+        "src/components/projects/project-dialogs.tsx::ManageProjectsDialog"
       ],
-      "consumers": ["settings page", "project store", "Web projects handler", "Tauri projects command"]
+      "consumers": ["Topbar scope menu", "project store", "Web projects handler", "Tauri projects command"]
     },
     {
       "id": "core.manager-deployer",
@@ -182,30 +191,49 @@
       "level": "L2",
       "status": "runtime-verified",
       "card": "modules/frontend-shell.md",
-      "sources": ["src/components/layout/app-shell.tsx", "src/components/layout/sidebar.tsx", "src/components/layout/topbar.tsx", "src/components/layout/quick-preferences.tsx", "src/components/layout/__tests__/quick-preferences.test.tsx", "src/components/layout/scope-switcher.tsx", "src/components/layout/scope-switcher-menu.tsx", "src/pages/settings.tsx", "src/stores/ui-store.ts", "src/index.css", "src/lib/i18n/locales/*/*.json"],
+      "sources": ["src/App.tsx", "src/components/layout/app-shell.tsx", "src/components/layout/sidebar.tsx", "src/components/layout/topbar.tsx", "src/components/layout/quick-preferences.tsx", "src/components/layout/__tests__/quick-preferences.test.tsx", "src/components/layout/scope-switcher.tsx", "src/components/layout/scope-switcher-menu.tsx", "src/components/projects/project-dialogs.tsx", "src/stores/ui-store.ts", "src/index.css", "src/lib/i18n/locales/*/*.json"],
       "anchors": [
         "src/components/layout/app-shell.tsx::AppShell",
         "src/components/layout/sidebar.tsx::Sidebar",
         "src/components/layout/topbar.tsx::Topbar",
         "src/components/layout/quick-preferences.tsx::QuickPreferences",
         "src/components/layout/scope-switcher.tsx::ScopeSwitcher",
-        "src/pages/settings.tsx::SettingsPage",
+        "src/components/projects/project-dialogs.tsx::AddProjectDialog",
         "src/stores/ui-store.ts::useUIStore",
         "src/index.css::workspace-shell"
       ],
-      "consumers": ["all routed frontend pages", "settings page", "scope store", "UI store"]
+      "consumers": ["all routed frontend pages", "scope store", "UI store", "project dialogs"]
+    },
+    {
+      "id": "ui.agent-management",
+      "level": "L2",
+      "status": "runtime-verified",
+      "card": "modules/agent-management.md",
+      "sources": ["src/pages/agents.tsx", "src/components/agents/agent-list.tsx", "src/components/agents/agent-detail.tsx", "src/stores/agent-store.ts", "src/stores/agent-config-store.ts", "src/stores/ui-store.ts", "crates/oac-web/src/handlers/agents.rs", "crates/oac-desktop/src/commands/agents.rs", "crates/oac-core/src/store.rs"],
+      "anchors": [
+        "src/components/agents/agent-list.tsx::AgentList",
+        "src/components/agents/agent-detail.tsx::AgentDetail",
+        "src/stores/agent-config-store.ts::addCustomPath",
+        "crates/oac-web/src/handlers/agents.rs::list_agents",
+        "crates/oac-desktop/src/commands/agents.rs::list_agents",
+        "crates/oac-core/src/store.rs::set_agent_enabled"
+      ],
+      "consumers": ["Agents page", "Overview", "Extensions filters", "install target selectors"]
     },
     {
       "id": "runtime.boundaries",
       "level": "L2",
       "status": "runtime-verified",
       "card": "modules/runtime-boundaries.md",
-      "sources": ["crates/oac-web/src/router.rs", "crates/oac-web/src/handlers/extensions.rs", "crates/oac-desktop/src/commands/extensions.rs", "crates/oac-cli/src/main.rs", ".github/workflows/*.yml"],
+      "sources": ["crates/oac-web/src/router.rs", "crates/oac-web/src/handlers/extensions.rs", "crates/oac-web/src/handlers/projects.rs", "crates/oac-desktop/src/commands/extensions.rs", "crates/oac-cli/src/main.rs", "scripts/dev.mjs", "scripts/check-ai-docs.mjs", "vite.config.ts", "package.json", "crates/oac-desktop/tauri.conf.json", ".github/workflows/*.yml"],
       "anchors": [
         "crates/oac-web/src/router.rs::build_router",
         "crates/oac-web/src/handlers/extensions.rs::toggle_extension",
+        "crates/oac-web/src/handlers/projects.rs::select_project_directory",
         "crates/oac-desktop/src/commands/extensions.rs::toggle_extension",
-        "crates/oac-cli/src/main.rs::main"
+        "crates/oac-cli/src/main.rs::main",
+        "scripts/dev.mjs::startDevelopmentEnvironment",
+        "scripts/check-ai-docs.mjs::repositoryFiles"
       ],
       "consumers": ["web mode", "Tauri desktop", "CLI", "CI and release workflows"]
     },
@@ -222,7 +250,7 @@
         "crates/oac-desktop/src/main.rs::app_update_enabled",
         "scripts/check-release-channel.mjs::validateReleaseChannel"
       ],
-      "consumers": ["frontend app startup", "sidebar", "settings", "Web update store", "Tauri plugin registration", "PR and release workflows"]
+      "consumers": ["frontend app startup", "sidebar", "Web update store", "Tauri plugin registration", "PR and release workflows"]
     },
     {
       "id": "runtime.identity-migration",
@@ -281,7 +309,9 @@
     "frontend_build": "npm run build",
     "frontend_lint": "npm run lint",
     "rust_tests": "cargo test --workspace",
-    "web_dev": "cargo run -p oac-cli -- serve",
+    "web_dev": "npm run dev",
+    "web_backend_only": "npm run dev:backend",
+    "frontend_only": "npm run dev:frontend",
     "desktop_dev": "cargo tauri dev"
   }
 }

@@ -1,5 +1,4 @@
 {
-  "settingsLabel": "工作区设置",
   "dismissHint": "关闭提示",
   "dismissNotification": "关闭通知",
   "undo": "撤销",
@@ -44,6 +43,7 @@
     "all": "全部范围",
     "label": "范围",
     "addProject": "添加项目...",
+    "manageProjects": "管理项目...",
     "installToScope": "安装范围",
     "installToScopeColon": "安装范围：",
     "required": "— 必选 —",

@@ -26,13 +26,17 @@ relative/path/to/file::symbol
 
 ## 当前基线
 
-- 基线提交：`6567543deb124c3e871665334b9d972f1aa7c879`
+- 基线提交：`bc352a314ab14101bd518aae19de3350cbb98828`
 - 当前产品、命令、crate、数据目录、Kit 包、前端状态键和发布资产统一使用 Open Agent Config / OAC 身份。
 - 旧身份字符串只允许作为一次性迁移输入或上游隔离门禁；新写入、运行时标识和用户可见发布说明不得继续产生旧身份。
 - 应用自身升级通道已关闭；在 fork 自有 Release、更新源和签名密钥完成前，不得重新启用。
 - 当前已注册 13 个 Agent Adapter，包含 Claude Code、Codex 和 Kimi Code。
 - Kimi Code 已完成第一版 Skills/MCP 接入；Hook 生命周期管理仍明确留在后续范围。
-- 本轮源码和文档验证基于该基线提交之上的 working tree，未推送远端。
+- 本地源码开发通过 `npm run dev` 一次启动 Rust Web API 与 Vite；Tauri 继续使用独立的 frontend-only 启动路径。
+- 独立 Settings 页面已移除：项目添加/管理位于 Topbar Scope 菜单，Agent 过滤/启停/配置位置位于 Agents 页面。
+- Add Project 同时保留“选择工作区文件夹”和“粘贴路径”：Tauri 使用跨平台 dialog 插件，本地 Web 后端在 macOS、Windows、Linux 调用宿主系统选择器；无桌面选择器时明确回退到粘贴路径。
+- Agent 默认目录只读显示 Adapter 的真实 `base_dir()`；附加配置位置会进入配置枚举，但不冒充 Agent Home 覆盖。
+- 本轮源码和文档验证基于该基线提交之上的 working tree。
 
 ## 状态定义
 

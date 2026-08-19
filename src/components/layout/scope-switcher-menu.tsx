@@ -1,8 +1,14 @@
 import { clsx } from "clsx";
-import { Check, Folder, GitBranch, Layers3, Plus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import {
+  Check,
+  Folder,
+  FolderCog,
+  GitBranch,
+  Layers3,
+  Plus,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { useScope } from "@/hooks/use-scope";
 import { useProjectStore } from "@/stores/project-store";
 import type { ScopeValue } from "@/stores/scope-store";
@@ -15,44 +21,57 @@ interface MenuItem {
 }
 
 const ADD_PROJECT_KEY = "__add_project__";
+const MANAGE_PROJECTS_KEY = "__manage_projects__";
 
-type NavigableItem = MenuItem | { key: typeof ADD_PROJECT_KEY };
+type ActionItem = {
+  key: typeof ADD_PROJECT_KEY | typeof MANAGE_PROJECTS_KEY;
+};
+type NavigableItem = MenuItem | ActionItem;
 
 export function ScopeSwitcherMenu({
   onClose,
+  onAddProject,
+  onManageProjects,
   placement = "bottom",
 }: {
   onClose: () => void;
+  onAddProject: () => void;
+  onManageProjects: () => void;
   placement?: "bottom" | "top";
 }) {
   const { t } = useTranslation("common");
   const { scope, setScope } = useScope();
   const projects = useProjectStore((s) => s.projects);
-  const navigate = useNavigate();
-
-  const items: MenuItem[] = [];
-  if (projects.length > 0) {
-    items.push({
-      key: "all",
-      scope: { type: "all" },
-      label: t("scope.all"),
-      icon: Layers3,
+  const items = useMemo<MenuItem[]>(() => {
+    const next: MenuItem[] = [];
+    if (projects.length > 0) {
+      next.push({
+        key: "all",
+        scope: { type: "all" },
+        label: t("scope.all"),
+        icon: Layers3,
+      });
+    }
+    next.push({
+      key: "global",
+      scope: { type: "global" },
+      label: t("scope.global"),
+      icon: Folder,
     });
-  }
-  items.push({
-    key: "global",
-    scope: { type: "global" },
-    label: t("scope.global"),
-    icon: Folder,
-  });
-  for (const p of projects) {
-    items.push({
-      key: p.path,
-      scope: { type: "project", name: p.name, path: p.path },
-      label: p.name,
-      icon: GitBranch,
-    });
-  }
+    for (const project of projects) {
+      next.push({
+        key: project.path,
+        scope: {
+          type: "project",
+          name: project.name,
+          path: project.path,
+        },
+        label: project.name,
+        icon: GitBranch,
+      });
+    }
+    return next;
+  }, [projects, t]);
 
   const isCurrent = (item: MenuItem): boolean => {
     if (scope.type === "all" && item.key === "all") return true;
@@ -61,19 +80,28 @@ export function ScopeSwitcherMenu({
     return false;
   };
 
-  const handleSelect = (item: MenuItem) => {
-    setScope(item.scope);
-    onClose();
-  };
+  const handleSelect = useCallback(
+    (item: MenuItem) => {
+      setScope(item.scope);
+      onClose();
+    },
+    [onClose, setScope],
+  );
 
-  const handleAddProject = () => {
-    navigate("/settings");
-    onClose();
-  };
+  const handleAction = useCallback(
+    (key: ActionItem["key"]) => {
+      if (key === ADD_PROJECT_KEY) onAddProject();
+      else onManageProjects();
+    },
+    [onAddProject, onManageProjects],
+  );
 
   // Group items: All scopes | (sep) | Global + projects | (sep) | Add Project
   const allItem = items.find((i) => i.key === "all");
-  const restItems = items.filter((i) => i.key !== "all");
+  const restItems = useMemo(
+    () => items.filter((item) => item.key !== "all"),
+    [items],
+  );
 
   // Flat list of every selectable row in render order, used for ↑/↓ keyboard
   // navigation. The Add Project virtual row is appended at the end.
@@ -82,19 +110,22 @@ export function ScopeSwitcherMenu({
     if (allItem) list.push(allItem);
     for (const it of restItems) list.push(it);
     list.push({ key: ADD_PROJECT_KEY });
+    if (projects.length > 0) list.push({ key: MANAGE_PROJECTS_KEY });
     return list;
-  }, [allItem, restItems]);
+  }, [allItem, restItems, projects.length]);
 
   const [activeIndex, setActiveIndex] = useState(() => {
     // Start with the currently selected scope highlighted, so opening the
     // menu doesn't visually jump to "All scopes" regardless of state.
     const idx = navigableItems.findIndex(
-      (item) => item.key !== ADD_PROJECT_KEY && isCurrent(item as MenuItem),
+      (item) =>
+        item.key !== ADD_PROJECT_KEY &&
+        item.key !== MANAGE_PROJECTS_KEY &&
+        isCurrent(item as MenuItem),
     );
     return idx >= 0 ? idx : 0;
   });
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: handleSelect and handleAddProject are new closures each render but only capture stable refs (setScope, onClose, navigate); including them would re-bind the keydown listener every render with no behavioural difference.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowDown") {
@@ -107,13 +138,14 @@ export function ScopeSwitcherMenu({
         e.preventDefault();
         const item = navigableItems[activeIndex];
         if (!item) return;
-        if (item.key === ADD_PROJECT_KEY) handleAddProject();
-        else handleSelect(item as MenuItem);
+        if (item.key === ADD_PROJECT_KEY || item.key === MANAGE_PROJECTS_KEY) {
+          handleAction(item.key);
+        } else handleSelect(item as MenuItem);
       }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [activeIndex, navigableItems]);
+  }, [activeIndex, handleAction, handleSelect, navigableItems]);
 
   const activeKey = navigableItems[activeIndex]?.key;
 
@@ -124,8 +156,8 @@ export function ScopeSwitcherMenu({
     return (
       <button
         key={item.key}
-        role="option"
-        aria-selected={isCurrent(item)}
+        role="menuitemradio"
+        aria-checked={isCurrent(item)}
         data-active={activeKey === item.key ? "true" : undefined}
         onClick={() => handleSelect(item)}
         className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-accent/60 data-[active=true]:bg-accent"
@@ -139,7 +171,7 @@ export function ScopeSwitcherMenu({
 
   return (
     <div
-      role="listbox"
+      role="menu"
       className={clsx(
         "absolute z-50 max-h-80 overflow-y-auto rounded-2xl border border-border/80 bg-popover p-1.5 shadow-xl shadow-primary/10 animate-scale-in",
         placement === "top"
@@ -156,13 +188,27 @@ export function ScopeSwitcherMenu({
       {restItems.map((item) => renderOption(item))}
       <div className="my-1 border-t border-border/40" />
       <button
-        onClick={handleAddProject}
+        type="button"
+        role="menuitem"
+        onClick={() => handleAction(ADD_PROJECT_KEY)}
         data-active={activeKey === ADD_PROJECT_KEY ? "true" : undefined}
         className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent/60 data-[active=true]:bg-accent"
       >
         <Plus size={14} />
         <span>{t("scope.addProject")}</span>
       </button>
+      {projects.length > 0 && (
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => handleAction(MANAGE_PROJECTS_KEY)}
+          data-active={activeKey === MANAGE_PROJECTS_KEY ? "true" : undefined}
+          className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent/60 data-[active=true]:bg-accent"
+        >
+          <FolderCog size={14} />
+          <span>{t("scope.manageProjects")}</span>
+        </button>
+      )}
     </div>
   );
 }

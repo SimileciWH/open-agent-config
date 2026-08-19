@@ -5,7 +5,6 @@ import {
   Command,
   LayoutDashboard,
   Package,
-  Settings,
   Shield,
   ShoppingBag,
 } from "lucide-react";
@@ -24,10 +23,6 @@ const mainNavItems = [
   { to: "/kits", icon: Package, labelKey: "kits" },
   { to: "/audit", icon: Shield, labelKey: "audit" },
   { to: "/marketplace", icon: ShoppingBag, labelKey: "marketplace" },
-] as const;
-
-const utilityNavItems = [
-  { to: "/settings", icon: Settings, labelKey: "settings" },
 ] as const;
 
 function SidebarLink({
@@ -122,18 +117,13 @@ export function Sidebar() {
           />
         ))}
 
-        <div className="mt-auto mx-2 mb-3 border-t border-sidebar-border/70" />
-
-        {appUpdateEnabled && (desktop ? <UpdateCard /> : <WebUpdateCard />)}
-
-        {utilityNavItems.map((item) => (
-          <SidebarLink
-            key={item.to}
-            to={item.to}
-            icon={item.icon}
-            label={t(item.labelKey)}
-          />
-        ))}
+        <div className="mt-auto space-y-3 pt-5">
+          {appUpdateEnabled && (desktop ? <UpdateCard /> : <WebUpdateCard />)}
+          <div className="mx-2 flex items-center justify-between border-t border-sidebar-border/70 px-1 pt-3 text-[10px] font-semibold text-sidebar-foreground/40">
+            <span>Open Agent Config</span>
+            <span>v{__APP_VERSION__}</span>
+          </div>
+        </div>
       </nav>
     </aside>
   );

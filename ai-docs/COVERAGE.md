@@ -2,10 +2,10 @@
 
 ## 当前基线
 
-- 源码基线：`f37cfb93920740d24dfcfb00581e95ecb1d4b608`
-- 源码与项目配置文件：344（不含 `ai-docs/` 和根目录 `AGENTS.md`）
+- 源码基线：`bc352a314ab14101bd518aae19de3350cbb98828`
+- 源码与项目配置文件：347（不含 `ai-docs/` 和根目录 `AGENTS.md`）
 - Rust 文件：90
-- TypeScript/TSX 文件：160
+- TypeScript/TSX 文件：162
 - CI workflow：4
 - 当前覆盖策略：全仓 L0/L1，Kimi 影响面的 L2-L4
 
@@ -21,6 +21,7 @@
 | `core.service-install` | yes | yes | yes | yes | yes | runtime-verified |
 | `ui.extension-control` | yes | yes | yes | yes | yes | runtime-verified |
 | `ui.frontend-shell` | yes | yes | yes | yes | yes | runtime-verified |
+| `ui.agent-management` | yes | yes | yes | yes | yes | runtime-verified |
 | `runtime.boundaries` | yes | yes | yes | yes | yes | runtime-verified |
 | `runtime.app-update-channel` | yes | yes | yes | yes | yes | runtime-verified |
 | `runtime.identity-migration` | yes | yes | yes | yes | yes | runtime-verified |
@@ -45,6 +46,12 @@
 OAC 身份重构涉及所有运行时 crate、持久化路径、Kit、managed marker、前端存储、Marketplace 来源、视觉资产、Desktop bundle ID 和发布资产；新增的 `runtime.identity-migration`、`core.kits` 与 `core.marketplace` 已同步到 L2-L4。旧身份只作为迁移输入或上游隔离门禁保留。
 
 本轮 UI 与项目路径改造涉及 `ui.frontend-shell`、`core.project-paths`、`core.scanner` 和 `runtime.boundaries`；快速偏好、Tauri 文件夹选择、递归 Git/worktree 发现及相关前端/Rust 回归测试已同步到 L2-L4。
+
+本地开发编排涉及 `runtime.boundaries`：`npm run dev` 负责等待 Web API 后再启动 Vite，Tauri 使用 frontend-only 命令以避免重复后端；启动器、端口覆盖、退出清理和运行态 smoke 已同步到 L2-L4。
+
+本轮 Settings 收口涉及 `ui.frontend-shell`、`ui.agent-management`、`core.project-paths`、`core.scanner` 和 `runtime.boundaries`：项目添加/管理进入 Scope 菜单，Agent 过滤/启停/配置位置进入 Agents，默认 Agent 路径改为只读 Adapter 真值，旧 Settings 路由仅保留兼容重定向。
+
+项目目录选择补全涉及 `core.project-paths` 与 `runtime.boundaries`：Tauri dialog 与 Web 宿主选择器都保留粘贴路径并汇入同一递归发现流；macOS 已完成真实运行验收，Windows/Linux 分支纳入测试构建但仍需目标系统运行验收。
 
 ## 进入 runtime-verified 的条件
 

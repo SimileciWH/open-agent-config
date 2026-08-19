@@ -1,4 +1,13 @@
-import { FileSearch, FolderPlus, FolderSearch, X } from "lucide-react";
+import { clsx } from "clsx";
+import {
+  CircleCheck,
+  CircleOff,
+  FileSearch,
+  FolderPlus,
+  FolderSearch,
+  MapPin,
+  X,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useScope } from "@/hooks/use-scope";
@@ -64,12 +73,12 @@ export function AgentDetail() {
   if (!agent) {
     return (
       <div className="flex flex-1 items-center justify-center text-muted-foreground text-sm">
-        {agents.length > 0 && !agents.some((a) => a.enabled)
-          ? t("list.noDetected")
-          : t("detail.selectAgent")}
+        {t("detail.selectAgent")}
       </div>
     );
   }
+
+  const agentInfo = agents.find((item) => item.name === agent.name);
 
   const customFiles = agent.config_files.filter(
     (f) => f.custom_id != null && matchesScope(f.scope),
@@ -84,11 +93,8 @@ export function AgentDetail() {
     if (list) list.push(file);
   }
 
-  // Scope-aware empty state: when scoped to a specific project and the agent
-  // has no config files in that scope, render a focused empty card instead of
-  // a stack of empty section headers.
   const totalVisible = nonCustomFiles.length + customFiles.length;
-  const isProjectScopeEmpty = scope.type === "project" && totalVisible === 0;
+  const isConfigEmpty = totalVisible === 0;
 
   const summaryActiveScope =
     scope.type === "all"
@@ -103,25 +109,68 @@ export function AgentDetail() {
       key={agent.name}
       className="flex-1 overflow-y-auto overscroll-contain p-5"
     >
-      <div className="flex items-start justify-between mb-6">
-        <div>
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
           <h2 className="text-2xl font-bold tracking-tight">
             {agentDisplayName(agent.name)}
           </h2>
-          {!agent.detected && (
-            <p className="text-[12px] text-muted-foreground mt-0.5">
-              {t("detail.notDetected")}
-            </p>
-          )}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span
+              className={clsx(
+                "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold",
+                agent.detected
+                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                  : "bg-muted text-muted-foreground",
+              )}
+            >
+              {agent.detected ? (
+                <CircleCheck size={11} />
+              ) : (
+                <CircleOff size={11} />
+              )}
+              {agent.detected ? t("detail.detected") : t("detail.notDetected")}
+            </span>
+            <span
+              className={clsx(
+                "rounded-full px-2 py-1 text-[10px] font-semibold",
+                agentInfo?.enabled === false
+                  ? "bg-muted text-muted-foreground"
+                  : "bg-primary/10 text-primary",
+              )}
+            >
+              {agentInfo?.enabled === false
+                ? t("detail.disabled")
+                : t("detail.enabled")}
+            </span>
+          </div>
         </div>
-        <div className="flex gap-1.5">
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md border border-dashed border-border text-muted-foreground hover:bg-muted/50 transition-colors"
+        <button
+          type="button"
+          onClick={() => setShowAddForm(true)}
+          className="flex items-center gap-1.5 rounded-lg border border-dashed border-border px-2.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+        >
+          <FolderPlus size={12} />
+          {t("detail.addConfigLocation")}
+        </button>
+      </div>
+
+      <div className="mb-5 flex items-start gap-3 rounded-xl border border-border/75 bg-muted/25 px-3.5 py-3">
+        <MapPin size={16} className="mt-0.5 shrink-0 text-primary/70" />
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            {t("detail.defaultLocation")}
+          </p>
+          <code
+            className="mt-1 block truncate text-xs text-foreground/80"
+            title={agentInfo?.path}
           >
-            <FolderPlus size={10} />
-            {t("detail.addCustomPath")}
-          </button>
+            {agentInfo?.path ?? t("detail.locationUnavailable")}
+          </code>
+          <p className="mt-1.5 text-[11px] leading-5 text-muted-foreground">
+            {agent.detected
+              ? t("detail.defaultLocationHint")
+              : t("detail.notDetectedHint")}
+          </p>
         </div>
       </div>
 
@@ -130,7 +179,7 @@ export function AgentDetail() {
         <div className="mb-5 rounded-lg border border-border p-3 space-y-2.5">
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-medium text-foreground">
-              {t("detail.addCustomPath")}
+              {t("detail.addConfigLocation")}
             </span>
             <button
               onClick={() => {
@@ -224,14 +273,38 @@ export function AgentDetail() {
         </div>
       )}
 
-      {isProjectScopeEmpty ? (
-        <div className="m-4 rounded-xl border border-dashed p-6 text-center">
-          <p className="text-sm font-medium">
-            {t("detail.emptyForScope", {
-              agent: agentDisplayName(agent.name),
-              scope: scope.type === "project" ? scope.name : tc("scope.global"),
-            })}
+      {isConfigEmpty ? (
+        <div className="my-4 rounded-xl border border-dashed border-border bg-muted/15 p-7 text-center">
+          <FolderSearch
+            size={24}
+            className="mx-auto text-muted-foreground/55"
+          />
+          <p className="mt-3 text-sm font-semibold">
+            {!agent.detected
+              ? t("detail.noConfigDetected")
+              : t("detail.emptyForScope", {
+                  agent: agentDisplayName(agent.name),
+                  scope:
+                    scope.type === "project"
+                      ? scope.name
+                      : scope.type === "global"
+                        ? tc("scope.global")
+                        : tc("scope.all"),
+                })}
           </p>
+          <p className="mx-auto mt-1 max-w-lg text-xs leading-5 text-muted-foreground">
+            {!agent.detected
+              ? t("detail.noConfigDetectedHint")
+              : t("detail.emptyForScopeHint")}
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowAddForm(true)}
+            className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
+          >
+            <FolderPlus size={13} />
+            {t("detail.addConfigLocation")}
+          </button>
         </div>
       ) : (
         <>

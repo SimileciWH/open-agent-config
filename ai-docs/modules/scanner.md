@@ -12,6 +12,7 @@ stable_anchors:
   - crates/oac-core/src/scanner.rs::scan_skill_dir
   - crates/oac-core/src/scanner.rs::scan_mcp_servers
   - crates/oac-core/src/scanner.rs::skill_locations
+  - crates/oac-core/src/scanner.rs::discover_projects
   - crates/oac-core/src/scanner.rs::discover_git_repositories
   - crates/oac-core/src/scanner.rs::is_git_repository
 known_gaps:
@@ -44,6 +45,7 @@ scan_all
 - `skill_locations()` 用于根据名称跨 Agent 找到物理目录或 flat Markdown 文件，是 Skills 开关的文件定位入口。
 - `scan_all()` 会结合已登记 project 扫描全局和项目 scope。
 - `discover_git_repositories()` 识别 `.git` 目录和 linked worktree 的 `.git` 文件；发现仓库后停止下探，递归结果稳定按绝对路径排序，并跳过隐藏目录、依赖目录、构建产物和符号链接目录。
+- `discover_projects()` 复用相同的深度和跳过边界，并额外识别各 Adapter 声明的 project marker；marker 列表在一次递归前构建，避免对每个目录重复实例化 Adapter。
 - Kimi 全局 MCP 位于 `$KIMI_CODE_HOME/mcp.json`（未设置时 `~/.kimi-code/mcp.json`），项目 MCP 位于 `.kimi-code/mcp.json`；项目层同名条目覆盖用户层由 Kimi 自身解释。
 
 ## 新增 Agent 必须检查

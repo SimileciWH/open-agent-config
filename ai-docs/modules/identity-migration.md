@@ -16,7 +16,6 @@ source_paths:
   - crates/oac-desktop/tauri.conf.json
   - src/lib/storage.ts
   - src/stores/*.ts
-  - src/pages/settings.tsx
   - public/icons/*.png
   - crates/oac-desktop/icons/*
   - .github/workflows/release.yml
@@ -55,6 +54,7 @@ known_gaps:
 - `app_paths::open_store()` 修复 Kit 文件后缀、数据库 `zip_path` 和 Kiro managed 文件名；所有运行时入口必须调用它。
 - Codex、DSH、Kit import 和 localStorage 只读取旧标识以迁移；后续写入会规范化为 OAC 标识。
 - 历史 release note 的用户可见品牌、命令和资产名同步重写为 OAC；Tauri identifier 使用 `com.openagentconfig.app`，不再保留旧产品运行时身份。
+- 身份门禁扫描 tracked/untracked 的现存文件，并跳过工作树中已删除但尚未提交的 tracked 文件，保证页面或资源删除不会让本地 pre-commit 检查误报 `ENOENT`。
 
 ## 不变量
 

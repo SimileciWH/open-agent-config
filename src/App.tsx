@@ -17,7 +17,6 @@ import ExtensionsPage from "./pages/extensions";
 import KitsPage from "./pages/kits";
 import MarketplacePage from "./pages/marketplace";
 import OverviewPage from "./pages/overview";
-import SettingsPage from "./pages/settings";
 import { useAgentStore } from "./stores/agent-store";
 import { useAuditStore } from "./stores/audit-store";
 import { useExtensionStore } from "./stores/extension-store";
@@ -38,8 +37,6 @@ export default function App() {
   const [showConfetti, setShowConfetti] = useState(false);
   const lastScanRef = useRef(0);
   const appIcon = useUIStore((s) => s.appIcon);
-  const agents = useAgentStore((s) => s.agents);
-  const agentVisibility = useUIStore((s) => s.agentVisibility);
 
   // Track resolved dark/light (reacts to OS changes when mode === "system")
   const [resolved, setResolved] = useState<"dark" | "light">(() =>
@@ -56,34 +53,6 @@ export default function App() {
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, [mode]);
-
-  // Keep "Detected only" honest over time, in both directions: disable agents
-  // that aren't detected, and re-enable ones we disabled once they're detected
-  // again (e.g. their config dir was removed then restored). Reconcile whenever
-  // the agent list or visibility changes. Converges: a disabled agent is no
-  // longer "enabled" and a re-enabled one leaves the snapshot, so the next run
-  // finds nothing to do.
-  useEffect(() => {
-    if (agentVisibility !== "detected") return;
-    const { autoDisabledAgents, setAutoDisabledAgents } = useUIStore.getState();
-    const snapshot = new Set(autoDisabledAgents);
-
-    const toDisable = agents
-      .filter((a) => !a.detected && a.enabled)
-      .map((a) => a.name);
-    const toReEnable = agents
-      .filter((a) => a.detected && !a.enabled && snapshot.has(a.name))
-      .map((a) => a.name);
-    if (toDisable.length === 0 && toReEnable.length === 0) return;
-
-    const setEnabledBulk = useAgentStore.getState().setEnabledBulk;
-    if (toDisable.length > 0) setEnabledBulk(toDisable, false);
-    if (toReEnable.length > 0) setEnabledBulk(toReEnable, true);
-
-    for (const n of toDisable) snapshot.add(n);
-    for (const n of toReEnable) snapshot.delete(n);
-    setAutoDisabledAgents([...snapshot]);
-  }, [agents, agentVisibility]);
 
   // Check the configured release channel on startup (non-blocking, silent failure).
   // The policy is disabled until the fork owns its release feed and signing key.
@@ -200,7 +169,10 @@ export default function App() {
               <Route path="extensions" element={<ExtensionsPage />} />
               <Route path="marketplace" element={<MarketplacePage />} />
               <Route path="audit" element={<AuditPage />} />
-              <Route path="settings" element={<SettingsPage />} />
+              <Route
+                path="settings"
+                element={<Navigate to="/agents" replace />}
+              />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>

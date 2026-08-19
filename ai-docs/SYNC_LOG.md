@@ -101,3 +101,36 @@
 - Merge: `a668d79` was merged into `main` with OAC path conflict resolution; the main branch keeps `oac-core`, `oac-web`, and `oac-desktop` identity while retaining the requested UI and project discovery behavior.
 - Verification passed after merge: `npm test` (36 files, 292 tests), `npm run lint` (191 files), `npm run build` (2106 modules), `cargo test --workspace` (oac-cli 17, oac-core 623, toggle integration 9, oac-desktop 3, oac-web unit 3, oac-web API 8), `cargo metadata --no-deps --format-version 1`, `npm run check:ai-docs`, `npm run check:release-channel`, `npm run check:oac-identity`, targeted recursive scanner test, and `git diff --check`.
 - Known warnings: Vite reports the existing main bundle above 500 kB and Node reports the existing `module.register()` deprecation; neither failed the build.
+
+## 2026-08-19 — One-command local Web development
+
+- Source baseline: `bc352a314ab14101bd518aae19de3350cbb98828` plus the current working tree.
+- Source change: `npm run dev` now starts the loopback `oac-cli serve --no-token` backend, waits for `POST /api/server_info`, and then starts Vite. `OAC_BACKEND_PORT` and `OAC_FRONTEND_PORT` keep the launcher and proxy aligned.
+- Runtime boundary: Tauri calls `npm run dev:frontend` because desktop requests use IPC. The launcher reuses a compatible existing backend, rejects unrelated port occupants, and owns only the child processes it creates.
+- Cross-platform implementation: Windows resolves `cargo.exe`, launches npm through its current CLI script with Node, and uses PID-scoped `taskkill` tree cleanup; macOS/Linux use direct executables and signals.
+- macOS runtime verification passed on `17070/1422`: backend readiness preceded Vite; direct and proxied `server_info` matched; a real browser rendered the onboarding UI, showed no Vite error overlay or captured console error, and advanced through Next.
+- Lifecycle verification passed: one `Ctrl+C` released both launcher-owned ports. Reusing the pre-existing backend on `7070` and then stopping the launcher released `1420` without terminating that backend.
+- Final checks passed: `node --check scripts/dev.mjs`, JSON parsing, `npm run check:release-channel`, `npm run check:oac-identity`, `npm run check:ai-docs`, `npm run lint` (191 files), `npm run build` (2106 modules), standalone `npm test` (36 files, 292 tests), targeted retry of the two initially concurrent-timeout tests (8/8), `cargo test -p oac-cli` (17 tests), and `git diff --check`.
+- Known gap: Windows and Linux launch/cleanup paths are source-reviewed but still require runtime verification on those operating systems.
+
+## 2026-08-19 — Settings removal and contextual project/Agent management
+
+- Source baseline: `bc352a314ab14101bd518aae19de3350cbb98828` plus the current working tree.
+- Navigation: removed the standalone Settings page and sidebar item; legacy `#/settings` redirects to Agents. The local application version remains visible in the sidebar.
+- Projects: Topbar Scope now owns Add Project and Manage Projects. Web paste and Tauri folder selection both scan first through shared Adapter-aware recursive discovery, show candidate selection, batch-add with one refresh, and support registry removal without deleting disk files.
+- Agents: moved All/Detected filtering, enabled state and real configuration-location management into Agents. Filtering is display-only, undetected adapters remain visible under All, and Web/Tauri no longer present legacy `agent_settings.custom_path` as an active root override.
+- Documentation: added `ui.agent-management` and its L3 playbook, refreshed frontend/project/scanner/runtime cards, and added Golden QA Q-017. Inventory gates account for tracked files deleted in the working tree.
+- Browser acceptance: an isolated macOS HOME and two-project fixture validated scan/selection/batch add, All scopes, project management, Agents filtering, undetected Kimi selection, legacy Settings redirect, layout, no error overlay and no console errors. A second `/tmp` scan returned canonical `/private/tmp` paths and disabled both existing projects as Added. Both dev ports were released and all fixtures were moved to Trash; real Agent data was untouched.
+- Verification passed: `npm test` (38 files, 297 tests), `npx tsc --noEmit`, `npm run lint` (193 files), `npm run build` (2106 modules), `cargo test --workspace` (664 tests), `cargo clippy --workspace --all-targets -- -D warnings`, `npm run check:release-channel`, `npm run check:oac-identity` (66 allowlisted migration/guard lines), `npm run check:ai-docs` (14 module cards, 382 indexed files), and `git diff --check`.
+- Known gaps: Tauri's native folder picker and Windows/Linux runtime execution were not exercised in this macOS Web run; the existing 819.51 kB Vite main-chunk warning and Node deprecation warning remain non-blocking.
+
+## 2026-08-19 — Cross-platform host folder picker for Add Project
+
+- Source baseline: `bc352a314ab14101bd518aae19de3350cbb98828` plus the current working tree.
+- UX: Add Project now always shows both “Choose workspace folder” and pasted-path scanning. A successful choice immediately enters the existing recursive discovery and confirmation flow; cancellation leaves the dialog usable.
+- Runtime routing: Tauri retains its cross-platform dialog plugin. Local Web calls `/api/select_project_directory`; the blocking backend uses Finder/AppleScript on macOS, PowerShell `FolderBrowserDialog` on Windows, and Zenity then Yad then KDialog on Linux. Picker-less or headless Linux reports an actionable error and preserves pasted-path fallback.
+- Cross-platform static coverage: the macOS, Windows and Linux backend implementations are included in the Rust test build even on the current macOS host. Unit tests cover cancel output and canonicalization of paths containing spaces; frontend tests separately assert Web backend and Tauri plugin routing.
+- macOS browser acceptance passed on isolated ports `17071/1423`: the real Finder chooser became frontmost, selected a fixture with two Git projects, automatically scanned and selected both, batch-added them, and switched to All scopes. A second chooser was cancelled without an error; pasted `/tmp` input still scanned to canonical `/private/tmp` projects marked Added/disabled. No Vite error overlay or browser console error was present.
+- Full verification passed: `npm test` (38 files, 299 tests), `npx tsc --noEmit`, `npm run lint` (193 files), `npm run build` (2106 modules), `cargo test --workspace` (667 tests), `cargo clippy --workspace --all-targets -- -D warnings`, `cargo metadata --no-deps --format-version 1`, `npm run check:release-channel`, `npm run check:oac-identity` (66 allowlisted migration/guard lines), `npm run check:ai-docs` (14 module cards, 382 indexed files), and `git diff --check`.
+- Cleanup: one `Ctrl+C` released both isolated ports; the test HOME, two-project fixture and screenshot were moved to the system Trash. The real HOME and real Agent configurations were not modified.
+- Known gaps: Windows and Linux native runtime execution plus Tauri desktop runtime acceptance still require those target desktop environments. The existing 819.71 kB Vite main-chunk warning and Node deprecation warning remain non-blocking.

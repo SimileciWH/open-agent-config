@@ -1,6 +1,6 @@
 schema_version: 1
 purpose: Verify that an AI can route repository tasks to source-traceable modules across Kimi integration, OAC identity migration, Kit safety, and release isolation.
-baseline_commit: f37cfb93920740d24dfcfb00581e95ecb1d4b608
+baseline_commit: bc352a314ab14101bd518aae19de3350cbb98828
 cases:
   - id: Q-001
     level: L2
@@ -108,14 +108,17 @@ cases:
     acceptance: The answer states that CLI listing and execution share the embedded registry, tips are same-origin, and any future remote registry needs OAC ownership and integrity controls.
   - id: Q-014
     level: L3
-    question: How does project path selection discover Git repositories recursively?
+    question: How does Add Project discover and confirm project roots without a Settings page?
     expected_anchors:
+      - crates/oac-core/src/scanner.rs::discover_projects
       - crates/oac-core/src/scanner.rs::discover_git_repositories
       - crates/oac-core/src/scanner.rs::is_git_repository
       - crates/oac-web/src/handlers/projects.rs::discover_projects
+      - crates/oac-web/src/handlers/projects.rs::select_project_directory
       - crates/oac-desktop/src/commands/projects.rs::discover_projects
-      - src/pages/settings.tsx::handleBrowseProject
-    acceptance: The answer distinguishes single-project add from folder discovery, covers .git directories and worktree files, bounded recursion, skipped directories, stable sorting, and batch confirmation.
+      - src/components/projects/project-dialogs.tsx::AddProjectDialog
+      - src/stores/project-store.ts::addProjects
+    acceptance: The answer covers the Scope-menu modal, always-visible picker plus paste paths, Tauri dialog, local Web host pickers for macOS/Windows/Linux and fallback behavior, Git/worktree and Agent markers, bounded recursion, skipped directories, stable sorting, disabled existing entries, batch confirmation, one rescan, and post-add scope selection.
   - id: Q-015
     level: L3
     question: What controls are visible in the blue-white shell's compact preferences strip?
@@ -124,4 +127,24 @@ cases:
       - src/components/layout/topbar.tsx::Topbar
       - src/components/layout/quick-preferences.tsx::QuickPreferences
       - src/stores/ui-store.ts::useUIStore
-    acceptance: The answer lists EN, 简中, 繁中, sun, moon, and lowercase auto, and explains that auto jointly selects system language and system appearance while the settings page no longer repeats those blocks.
+    acceptance: The answer lists EN, 简中, 繁中, sun, moon, and lowercase auto, explains that auto jointly selects system language and appearance, and confirms that no Settings navigation remains.
+  - id: Q-016
+    level: L3
+    question: How does one-command local Web development start both runtimes without conflicting with Tauri development?
+    expected_anchors:
+      - scripts/dev.mjs::startDevelopmentEnvironment
+      - package.json::node scripts/dev.mjs
+      - vite.config.ts::OAC_BACKEND_PORT
+      - crates/oac-desktop/tauri.conf.json::npm run dev:frontend
+    acceptance: The answer states that npm run dev starts and waits for the loopback no-token Web API before Vite, supports aligned port overrides and joint cleanup, while Tauri starts frontend-only because it uses IPC.
+  - id: Q-017
+    level: L3
+    question: Where are Agent visibility, enablement, and path controls after Settings removal, and which paths actually affect scanning?
+    expected_anchors:
+      - src/App.tsx::Navigate to="/agents"
+      - src/components/agents/agent-list.tsx::AgentList
+      - src/components/agents/agent-detail.tsx::AgentDetail
+      - src/stores/agent-config-store.ts::addCustomPath
+      - crates/oac-web/src/handlers/agents.rs::list_agents
+      - crates/oac-desktop/src/commands/agents.rs::list_agents
+    acceptance: The answer states that All/Detected is display-only, row switches explicitly control enabled state, undetected agents remain selectable in All, the displayed default path is Adapter base_dir, custom config locations are merged into Agent configs, legacy custom_path is not an active Agent-home override, and /settings only redirects.
