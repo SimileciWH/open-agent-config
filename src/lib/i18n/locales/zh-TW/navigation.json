@@ -1,4 +1,7 @@
 {
+  "workspace": "工作區",
+  "controlCenter": "控制中心",
+  "node": "節點",
   "overview": "總覽",
   "kits": "工具組",
   "agents": "代理",

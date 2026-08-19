@@ -6,10 +6,12 @@
 | --- | --- | --- |
 | 新增 Agent | `playbooks/add-agent.md` | `crates/hk-core/src/adapter/mod.rs::AgentAdapter` |
 | 扫描 Skills/MCP | `modules/scanner.md` | `crates/hk-core/src/scanner.rs::scan_all` |
+| 项目路径与 Git 仓库发现 | `modules/project-paths.md` | `crates/hk-core/src/scanner.rs::discover_git_repositories` |
 | Skills 开关 | `playbooks/skills-toggle.md` | `crates/hk-core/src/manager.rs::toggle_skill` |
 | MCP 开关 | `playbooks/mcp-toggle.md` | `crates/hk-core/src/manager.rs::toggle_mcp` |
 | MCP 部署/恢复 | `modules/manager-deployer.md` | `crates/hk-core/src/deployer.rs::deploy_mcp_server` |
 | UI 跨 Agent 分组控制 | `modules/frontend-extension-control.md` | `src/stores/extension-store.ts::toggle` |
+| UI Shell、快速偏好与设置页 | `modules/frontend-shell.md` | `src/components/layout/app-shell.tsx::AppShell` |
 | Web/Tauri/CLI 行为差异 | `modules/runtime-boundaries.md` | `crates/hk-web/src/router.rs::build_router` |
 | 数据库和扫描同步 | `modules/store-models.md` | `crates/hk-core/src/store.rs::Store::sync_extensions` |
 | 安装和能力门控 | `modules/service-install.md` | `crates/hk-core/src/service.rs::install_to_agent` |
@@ -34,10 +36,12 @@
 
 - [`modules/adapter.md`](modules/adapter.md)
 - [`modules/scanner.md`](modules/scanner.md)
+- [`modules/project-paths.md`](modules/project-paths.md)
 - [`modules/manager-deployer.md`](modules/manager-deployer.md)
 - [`modules/store-models.md`](modules/store-models.md)
 - [`modules/service-install.md`](modules/service-install.md)
 - [`modules/frontend-extension-control.md`](modules/frontend-extension-control.md)
+- [`modules/frontend-shell.md`](modules/frontend-shell.md)
 - [`modules/runtime-boundaries.md`](modules/runtime-boundaries.md)
 - [`modules/app-update-channel.md`](modules/app-update-channel.md)
 
@@ -48,6 +52,7 @@
 - [`playbooks/mcp-toggle.md`](playbooks/mcp-toggle.md)
 - [`playbooks/cross-agent-sync.md`](playbooks/cross-agent-sync.md)
 - [`playbooks/verification.md`](playbooks/verification.md)
+- [`playbooks/project-paths.md`](playbooks/project-paths.md)
 - [`playbooks/app-update-channel.md`](playbooks/app-update-channel.md)
 
 ### L4

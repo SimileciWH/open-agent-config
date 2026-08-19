@@ -82,3 +82,22 @@ cases:
       - crates/hk-desktop/src/main.rs::app_update_enabled
       - scripts/check-release-channel.mjs::validateReleaseChannel
     acceptance: The answer distinguishes application updates from extension updates, confirms the disabled Web/Tauri gates, and requires the fork's own HTTPS feed, signing key, capabilities, artifacts, CI check, and cross-platform canary before enablement.
+  - id: Q-011
+    level: L2
+    question: How does selecting a large folder enumerate Git projects without duplicating dependency or nested checkout paths?
+    expected_anchors:
+      - crates/hk-core/src/scanner.rs::discover_git_repositories
+      - crates/hk-core/src/scanner.rs::is_git_repository
+      - crates/hk-web/src/handlers/projects.rs::discover_projects
+      - crates/hk-desktop/src/commands/projects.rs::discover_projects
+      - src/pages/settings.tsx::handleBrowseProject
+    acceptance: The answer states that .git directories and worktree files are recognized, the Browse folder action always enters recursive discovery, the scan stops at a repository, skips hidden/dependency/symlink directories, sorts results, and uses the same core function from Web and Tauri.
+  - id: Q-012
+    level: L3
+    question: Where are language and appearance preferences exposed after the UI redesign, and which visible theme choices remain?
+    expected_anchors:
+      - src/components/layout/quick-preferences.tsx::QuickPreferences
+      - src/components/layout/topbar.tsx::Topbar
+      - src/stores/ui-store.ts::useUIStore
+      - src/index.css::workspace-shell
+    acceptance: The answer places only EN/简中/繁中, sun/moon, and lowercase auto directly in the top-right without a popover or duplicate translations; auto jointly restores language and appearance to system, settings no longer contains duplicate appearance/language sections, and only the blue-white base theme remains internal.

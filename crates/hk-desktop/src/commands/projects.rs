@@ -24,12 +24,11 @@ pub fn add_project(state: State<AppState>, path: String) -> Result<Project, HkEr
         .map_err(|e| HkError::CommandFailed(format!("Invalid path: {}", e)))?;
     let path = project_path.to_string_lossy().to_string();
 
-    // Validate the path contains project markers for any supported agent.
-    // Each adapter declares its own markers via project_markers() — see
-    // scanner::is_project_dir.
+    // Accept a Git repository or a directory with a recognized Agent marker
+    // so existing non-Git projects remain backwards compatible.
     if !scanner::is_project_dir(&project_path) {
         return Err(HkError::Validation(
-            "Directory does not contain any recognized agent configuration".into(),
+            "Directory is not a Git repository and has no recognized agent configuration".into(),
         ));
     }
 
@@ -90,5 +89,5 @@ pub fn discover_projects(root_path: String) -> Result<Vec<DiscoveredProject>, Hk
             root_path
         )));
     }
-    Ok(scanner::discover_projects(root, 4))
+    Ok(scanner::discover_git_repositories(root, 12))
 }

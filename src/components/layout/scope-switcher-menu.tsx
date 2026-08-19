@@ -1,4 +1,5 @@
-import { Check, Folder, Plus } from "lucide-react";
+import { clsx } from "clsx";
+import { Check, Folder, GitBranch, Layers3, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -17,7 +18,13 @@ const ADD_PROJECT_KEY = "__add_project__";
 
 type NavigableItem = MenuItem | { key: typeof ADD_PROJECT_KEY };
 
-export function ScopeSwitcherMenu({ onClose }: { onClose: () => void }) {
+export function ScopeSwitcherMenu({
+  onClose,
+  placement = "bottom",
+}: {
+  onClose: () => void;
+  placement?: "bottom" | "top";
+}) {
   const { t } = useTranslation("common");
   const { scope, setScope } = useScope();
   const projects = useProjectStore((s) => s.projects);
@@ -29,7 +36,7 @@ export function ScopeSwitcherMenu({ onClose }: { onClose: () => void }) {
       key: "all",
       scope: { type: "all" },
       label: t("scope.all"),
-      icon: Folder,
+      icon: Layers3,
     });
   }
   items.push({
@@ -43,7 +50,7 @@ export function ScopeSwitcherMenu({ onClose }: { onClose: () => void }) {
       key: p.path,
       scope: { type: "project", name: p.name, path: p.path },
       label: p.name,
-      icon: Folder,
+      icon: GitBranch,
     });
   }
 
@@ -133,7 +140,12 @@ export function ScopeSwitcherMenu({ onClose }: { onClose: () => void }) {
   return (
     <div
       role="listbox"
-      className="absolute left-0 right-0 bottom-full mb-1 z-50 max-h-80 overflow-y-auto rounded-xl border border-border/60 bg-background p-1 shadow-sm"
+      className={clsx(
+        "absolute z-50 max-h-80 overflow-y-auto rounded-2xl border border-border/80 bg-popover p-1.5 shadow-xl shadow-primary/10 animate-scale-in",
+        placement === "top"
+          ? "left-0 top-full mt-2 w-72"
+          : "bottom-full left-0 right-0 mb-2",
+      )}
     >
       {allItem && (
         <>

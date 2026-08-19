@@ -1470,19 +1470,38 @@ pub fn discover_projects(root: &Path, max_depth: usize) -> Vec<DiscoveredProject
     projects
 }
 
+/// Discover Git repositories under a user-selected workspace directory.
+///
+/// A repository is identified by a `.git` directory (or worktree file). Once
+/// a repository is found we stop descending so nested dependency folders and
+/// the repository's own internal checkout do not produce duplicate entries.
+pub fn discover_git_repositories(root: &Path, max_depth: usize) -> Vec<DiscoveredProject> {
+    let mut projects = Vec::new();
+    discover_git_repositories_recursive(root, max_depth, 0, &mut projects);
+    projects.sort_by(|a, b| a.path.cmp(&b.path));
+    projects
+}
+
+/// Return true when a directory is backed by Git, including linked worktrees
+/// where `.git` is a file rather than a directory.
+pub fn is_git_repository(dir: &Path) -> bool {
+    dir.join(".git").is_dir() || dir.join(".git").is_file()
+}
+
 /// True if `dir` looks like a project root for any of the supported agents.
 /// Each adapter declares its own `project_markers` (see
 /// [`adapter::AgentAdapter::project_markers`]); we consider the directory a
-/// project as soon as one adapter's marker matches. Used by both project
-/// discovery (`discover_projects`) and the `add_project` validation in
-/// hk-desktop / hk-web.
+/// project as soon as one adapter's marker matches. Git repositories are also
+/// accepted so a plain repository can be registered before an Agent config is
+/// created. The Git-only bulk discovery path is `discover_git_repositories`.
 pub fn is_project_dir(dir: &Path) -> bool {
-    crate::adapter::all_adapters().iter().any(|a| {
-        a.project_markers().iter().any(|m| match m {
-            crate::adapter::ProjectMarker::Dir(p) => dir.join(p).is_dir(),
-            crate::adapter::ProjectMarker::File(p) => dir.join(p).is_file(),
+    is_git_repository(dir)
+        || crate::adapter::all_adapters().iter().any(|a| {
+            a.project_markers().iter().any(|m| match m {
+                crate::adapter::ProjectMarker::Dir(p) => dir.join(p).is_dir(),
+                crate::adapter::ProjectMarker::File(p) => dir.join(p).is_file(),
+            })
         })
-    })
 }
 
 fn discover_projects_recursive(
@@ -1542,6 +1561,66 @@ fn discover_projects_recursive(
         }
 
         discover_projects_recursive(&path, max_depth, current_depth + 1, projects);
+    }
+}
+
+fn discover_git_repositories_recursive(
+    dir: &Path,
+    max_depth: usize,
+    current_depth: usize,
+    projects: &mut Vec<DiscoveredProject>,
+) {
+    if current_depth > max_depth {
+        return;
+    }
+
+    if is_git_repository(dir) {
+        let name = dir
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
+        projects.push(DiscoveredProject {
+            name,
+            path: dir.to_string_lossy().to_string(),
+        });
+        return;
+    }
+
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        let Ok(file_type) = entry.file_type() else {
+            continue;
+        };
+        if !file_type.is_dir() || file_type.is_symlink() {
+            continue;
+        }
+
+        let dir_name = path
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
+        if dir_name.starts_with('.')
+            || matches!(
+                dir_name.as_str(),
+                "node_modules"
+                    | "target"
+                    | "__pycache__"
+                    | "vendor"
+                    | "dist"
+                    | "build"
+                    | "venv"
+                    | ".venv"
+            )
+        {
+            continue;
+        }
+
+        discover_git_repositories_recursive(&path, max_depth, current_depth + 1, projects);
     }
 }
 
@@ -2811,6 +2890,32 @@ mod tests {
         // max_depth=3 should find it
         let deep_result = discover_projects(root.path(), 3);
         assert_eq!(deep_result.len(), 1);
+    }
+
+    #[test]
+    fn test_discover_git_repositories_finds_directories_and_worktrees() {
+        let root = TempDir::new().unwrap();
+
+        let repo_a = root.path().join("repo-a");
+        std::fs::create_dir_all(repo_a.join(".git")).unwrap();
+
+        let repo_b = root.path().join("workspace").join("repo-b");
+        std::fs::create_dir_all(&repo_b).unwrap();
+        // Linked worktrees use a .git file containing the real gitdir path.
+        std::fs::write(repo_b.join(".git"), "gitdir: ../.git/worktrees/repo-b").unwrap();
+
+        let hidden = root.path().join(".hidden-repo");
+        std::fs::create_dir_all(hidden.join(".git")).unwrap();
+
+        let dependency = root.path().join("node_modules").join("nested-repo");
+        std::fs::create_dir_all(dependency.join(".git")).unwrap();
+
+        let discovered = discover_git_repositories(root.path(), 12);
+        assert_eq!(discovered.len(), 2);
+        assert_eq!(discovered[0].name, "repo-a");
+        assert_eq!(discovered[1].name, "repo-b");
+        assert!(is_project_dir(&repo_a));
+        assert!(is_project_dir(&repo_b));
     }
 
     #[test]

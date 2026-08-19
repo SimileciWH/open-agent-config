@@ -9,9 +9,9 @@
     "source_of_truth": "source code and tests"
   },
   "inventory": {
-    "source_files": 336,
+    "source_files": 339,
     "rust_files": 89,
-    "typescript_and_tsx_files": 155,
+    "typescript_and_tsx_files": 158,
     "workflow_files": 4,
     "frontend_root": "src",
     "rust_workspace_root": "crates"
@@ -96,9 +96,29 @@
         "crates/hk-core/src/scanner.rs::scan_all",
         "crates/hk-core/src/scanner.rs::scan_adapter",
         "crates/hk-core/src/scanner.rs::skill_locations",
-        "crates/hk-core/src/scanner.rs::scan_mcp_servers"
+        "crates/hk-core/src/scanner.rs::scan_mcp_servers",
+        "crates/hk-core/src/scanner.rs::discover_git_repositories",
+        "crates/hk-core/src/scanner.rs::is_git_repository",
+        "crates/hk-core/src/scanner.rs::is_project_dir"
       ],
-      "consumers": ["store", "manager", "web extensions handler", "desktop extensions commands"]
+      "consumers": ["store", "manager", "project paths", "web extensions handler", "desktop extensions commands"]
+    },
+    {
+      "id": "core.project-paths",
+      "level": "L2",
+      "status": "runtime-verified",
+      "card": "modules/project-paths.md",
+      "sources": ["crates/hk-core/src/scanner.rs", "crates/hk-web/src/handlers/projects.rs", "crates/hk-desktop/src/commands/projects.rs", "src/pages/settings.tsx", "src/stores/project-store.ts", "src/lib/invoke.ts", "src/lib/dialog.ts"],
+      "anchors": [
+        "crates/hk-core/src/scanner.rs::discover_git_repositories",
+        "crates/hk-core/src/scanner.rs::is_git_repository",
+        "crates/hk-core/src/scanner.rs::is_project_dir",
+        "crates/hk-web/src/handlers/projects.rs::discover_projects",
+        "crates/hk-desktop/src/commands/projects.rs::discover_projects",
+        "src/pages/settings.tsx::handleAddPath",
+        "src/stores/project-store.ts::addProject"
+      ],
+      "consumers": ["settings page", "project store", "Web API", "Tauri IPC"]
     },
     {
       "id": "core.manager-deployer",
@@ -159,15 +179,35 @@
       "consumers": ["src/pages/extensions.tsx", "shared Extension UI components"]
     },
     {
+      "id": "ui.frontend-shell",
+      "level": "L2",
+      "status": "runtime-verified",
+      "card": "modules/frontend-shell.md",
+      "sources": ["src/components/layout/app-shell.tsx", "src/components/layout/sidebar.tsx", "src/components/layout/topbar.tsx", "src/components/layout/quick-preferences.tsx", "src/components/layout/__tests__/quick-preferences.test.tsx", "src/components/layout/scope-switcher.tsx", "src/components/layout/scope-switcher-menu.tsx", "src/pages/settings.tsx", "src/stores/ui-store.ts", "src/index.css"],
+      "anchors": [
+        "src/components/layout/app-shell.tsx::AppShell",
+        "src/components/layout/sidebar.tsx::Sidebar",
+        "src/components/layout/topbar.tsx::Topbar",
+        "src/components/layout/quick-preferences.tsx::QuickPreferences",
+        "src/components/layout/scope-switcher.tsx::ScopeSwitcher",
+        "src/pages/settings.tsx::SettingsPage",
+        "src/stores/ui-store.ts::useUIStore",
+        "src/index.css::workspace-shell"
+      ],
+      "consumers": ["all routed pages", "settings", "scope navigation", "Web and Tauri frontend"]
+    },
+    {
       "id": "runtime.boundaries",
       "level": "L2",
       "status": "runtime-verified",
       "card": "modules/runtime-boundaries.md",
-      "sources": ["crates/hk-web/src/router.rs", "crates/hk-web/src/handlers/extensions.rs", "crates/hk-desktop/src/commands/extensions.rs", "crates/hk-cli/src/main.rs", ".github/workflows/*.yml"],
+      "sources": ["crates/hk-web/src/router.rs", "crates/hk-web/src/handlers/extensions.rs", "crates/hk-web/src/handlers/projects.rs", "crates/hk-desktop/src/commands/extensions.rs", "crates/hk-desktop/src/commands/projects.rs", "crates/hk-cli/src/main.rs", ".github/workflows/*.yml"],
       "anchors": [
         "crates/hk-web/src/router.rs::build_router",
         "crates/hk-web/src/handlers/extensions.rs::toggle_extension",
+        "crates/hk-web/src/handlers/projects.rs::discover_projects",
         "crates/hk-desktop/src/commands/extensions.rs::toggle_extension",
+        "crates/hk-desktop/src/commands/projects.rs::discover_projects",
         "crates/hk-cli/src/main.rs::main"
       ],
       "consumers": ["web mode", "Tauri desktop", "CLI", "CI and release workflows"]

@@ -3,9 +3,9 @@
 ## 当前基线
 
 - 源码基线：`4321a802c021736592ba408b5ff913cff3919053`
-- 源码与项目配置文件：336（不含 `ai-docs/` 和根目录 `AGENTS.md`）
+- 源码与项目配置文件：339（不含 `ai-docs/` 和根目录 `AGENTS.md`）
 - Rust 文件：89
-- TypeScript/TSX 文件：155
+- TypeScript/TSX 文件：158
 - CI workflow：4
 - 当前覆盖策略：全仓 L0/L1，Kimi 影响面的 L2-L4
 
@@ -15,10 +15,12 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | `core.adapter` | yes | yes | yes | yes | yes | runtime-verified |
 | `core.scanner` | yes | yes | yes | yes | yes | runtime-verified |
+| `core.project-paths` | yes | yes | yes | yes | yes | runtime-verified |
 | `core.manager-deployer` | yes | yes | yes | yes | yes | runtime-verified |
 | `core.store-models` | yes | yes | yes | yes | yes | runtime-verified |
 | `core.service-install` | yes | yes | yes | yes | yes | runtime-verified |
 | `ui.extension-control` | yes | yes | yes | yes | yes | runtime-verified |
+| `ui.frontend-shell` | yes | yes | yes | yes | yes | runtime-verified |
 | `runtime.boundaries` | yes | yes | yes | yes | yes | runtime-verified |
 | `runtime.app-update-channel` | yes | yes | yes | yes | yes | runtime-verified |
 
@@ -36,6 +38,8 @@
 - `ui.shared`：共享 UI、错误边界和 Agent mascot。
 
 本轮新增 Kimi 适配涉及 `core.adapter`、`core.scanner`、`core.manager-deployer`、`core.store-models`、`core.service-install`、`ui.extension-control` 和 `runtime.boundaries`，均已同步到 L2/L3/L4。
+
+本轮 UI 与项目路径重构新增 `ui.frontend-shell`、`core.project-paths`，并同步设置页、Topbar 快速偏好、Web/Tauri 项目命令和 Git 递归发现的 L2/L3/L4 证据。
 
 应用自身升级隔离涉及 `runtime.app-update-channel` 和 `runtime.boundaries`；默认关闭策略、Tauri 配置和 CI 门禁已同步到 L2-L4。
 

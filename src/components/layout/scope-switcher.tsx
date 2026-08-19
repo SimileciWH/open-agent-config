@@ -1,3 +1,4 @@
+import { clsx } from "clsx";
 import { ChevronDown, Folder } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -5,7 +6,11 @@ import { useScope } from "@/hooks/use-scope";
 import type { ScopeValue } from "@/stores/scope-store";
 import { ScopeSwitcherMenu } from "./scope-switcher-menu";
 
-export function ScopeSwitcher() {
+export function ScopeSwitcher({
+  placement = "bottom",
+}: {
+  placement?: "bottom" | "top";
+}) {
   const { t } = useTranslation("common");
   const { scope } = useScope();
   const [open, setOpen] = useState(false);
@@ -36,24 +41,37 @@ export function ScopeSwitcher() {
   const label = scopeLabel(scope);
 
   return (
-    <div ref={containerRef} className="relative">
+    <div
+      ref={containerRef}
+      className={clsx("relative", placement === "top" && "min-w-0")}
+    >
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={t("scope.switchAria", { label })}
-        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-medium text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors duration-150 ease-out"
+        className={clsx(
+          "flex items-center gap-2.5 rounded-xl text-[13px] font-semibold transition-colors duration-150 ease-out",
+          placement === "top"
+            ? "max-w-[min(22rem,48vw)] bg-background/70 px-3 py-2 text-foreground shadow-sm ring-1 ring-border/70 hover:bg-accent"
+            : "w-full px-3 py-2.5 text-sidebar-foreground/70 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground",
+        )}
       >
         <Folder size={20} strokeWidth={1.75} className="shrink-0" />
-        <span className="truncate flex-1 text-left">{label}</span>
+        <span className="min-w-0 flex-1 truncate text-left">{label}</span>
         <ChevronDown
           size={14}
           strokeWidth={1.75}
           className="shrink-0 opacity-60"
         />
       </button>
-      {open && <ScopeSwitcherMenu onClose={() => setOpen(false)} />}
+      {open && (
+        <ScopeSwitcherMenu
+          onClose={() => setOpen(false)}
+          placement={placement}
+        />
+      )}
     </div>
   );
 }

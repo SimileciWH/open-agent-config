@@ -1,6 +1,8 @@
 import { create } from "zustand";
 
-export type ThemeName = "tiesen" | "claude";
+// The product ships one blue-white base theme. Keep the type so the DOM theme
+// attribute remains explicit, while avoiding a second user-facing theme.
+export type ThemeName = "tiesen";
 export type Mode = "system" | "dark" | "light";
 export type AppIcon = "icon-1" | "icon-2";
 export type AgentVisibility = "all" | "detected";
@@ -60,7 +62,7 @@ interface UIState {
 }
 
 const ALLOWED_MODES: readonly Mode[] = ["system", "dark", "light"];
-const ALLOWED_THEME_NAMES: readonly ThemeName[] = ["tiesen", "claude"];
+const ALLOWED_THEME_NAMES: readonly ThemeName[] = ["tiesen"];
 const ALLOWED_APP_ICONS: readonly AppIcon[] = ["icon-1", "icon-2"];
 const ALLOWED_AGENT_VISIBILITY: readonly AgentVisibility[] = [
   "all",

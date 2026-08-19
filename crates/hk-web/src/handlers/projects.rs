@@ -42,12 +42,11 @@ pub async fn add_project(
         let project_path = super::normalize(&project_path);
         let path = project_path.to_string_lossy().to_string();
 
-        // Validate the path contains project markers for any supported agent.
-        // Each adapter declares its own markers via project_markers() — see
-        // scanner::is_project_dir.
+        // Accept a Git repository or a directory with a recognized Agent
+        // marker so existing non-Git projects remain backwards compatible.
         if !scanner::is_project_dir(&project_path) {
             return Err(hk_core::HkError::Validation(
-                "Directory does not contain any recognized agent configuration".into(),
+                "Directory is not a Git repository and has no recognized agent configuration".into(),
             ));
         }
 
@@ -133,6 +132,6 @@ pub async fn discover_projects(
                 "Not a directory: {}", params.root_path
             )));
         }
-        Ok(scanner::discover_projects(root, 4))
+        Ok(scanner::discover_git_repositories(root, 12))
     }).await
 }

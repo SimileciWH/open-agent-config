@@ -69,3 +69,32 @@
 - Targeted verification passed: `npm run check:release-channel`; Web updater tests passed with 2 files and 17 tests, including no network request while disabled.
 - Full verification passed: `npm test` (34 files, 287 tests), `npm run build` (2103 modules), `npm run lint` (186 files), `cargo test --workspace` (hk-cli 17, hk-core 609, toggle integration 9, hk-desktop 3, hk-web unit 3, hk-web API 8), `npm run check:ai-docs` (8 module cards, 360 indexed files), and `git diff --check`.
 - Known gap: the fork's own Release feed, Tauri signing key, and signed macOS/Windows/Linux canary do not yet exist, so the channel must remain disabled.
+
+## 2026-08-19 — Blue-white UI shell and recursive Git project paths
+
+- Source commit: `6567543deb124c3e871665334b9d972f1aa7c879` plus the current working tree.
+- UI scope: replaced the sparse frosted layout with a Jira/Wiki-inspired blue-white workspace shell; moved scope switching to the Topbar; added right-side language and appearance quick preferences; removed duplicate Appearance/Language sections from Settings; kept one user-facing blue-white base theme.
+- Project path scope: Settings now keeps paste/manual entry and exposes a Tauri folder picker; direct Git paths are accepted; a selected workspace folder recursively enumerates Git repositories including linked worktrees, with deterministic sorting, dependency/hidden-directory exclusions, and depth 12 protection.
+- Documentation: updated `modules/scanner.md`, `modules/runtime-boundaries.md`, added `modules/project-paths.md` and `modules/frontend-shell.md`, added the project-path playbook, and extended Golden QA with Q-011/Q-012.
+- Frontend verification passed: `npm test` (34 files, 287 tests), `npm run lint` (188 files), `npm run build` (2105 modules), browser UI snapshot/interaction checks for language and light/dark/system modes, and targeted Rust Git discovery test (1 passed).
+- Final verification passed: `cargo test --workspace` (hk-cli 17, hk-core 610, toggle integration 9, hk-desktop 3, hk-web unit 3, hk-web API 8, doctests 0 failures), `npm run check:ai-docs` (10 module cards, 365 indexed files), `npm run check:release-channel`, and final frontend build.
+- Native Tauri folder picker, narrow viewport, and real local configuration writes remain manual gaps.
+
+## 2026-08-19 — Flat preference controls and Browse-first project discovery
+
+- Source commit: `6567543deb124c3e871665334b9d972f1aa7c879` plus the current working tree.
+- Preference UI: removed the collapsible language/appearance popover. Topbar now permanently lays out `EN`、`简中`、`繁中`、`Auto`, localized language names, and sun/moon/system appearance choices; the blue-white theme indicator remains visible on wide layouts.
+- Project Paths: clicking the Tauri “Choose folder” button now always calls recursive Git discovery and presents the selectable project list. Text entry keeps direct single-project add behavior and falls back to discovery for workspace paths.
+- Correctness fix: the Browse handler now awaits a single discovery flow and no longer risks duplicate add/discovery calls.
+- Documentation: updated `modules/frontend-shell.md`, `modules/project-paths.md`, `playbooks/project-paths.md`, Q-011/Q-012, and this log.
+- Reverification passed: `npm run check:ai-docs` (10 module cards, 365 indexed source/docs files), `npm test` (34 files, 287 tests), `npm run build` (2105 modules transformed), `npm run lint` (188 files), `git diff --check`, and the targeted Rust Git discovery test (1 passed). Browser snapshot verification confirmed the permanent flat controls and localized Settings copy. Native Tauri folder Browse, narrow viewport, and real local configuration writes remain manual gaps.
+- Formatting note: `cargo fmt --all -- --check` still reports pre-existing repository-wide Rust formatting drift outside this change; no unrelated formatter churn was applied.
+
+## 2026-08-19 — Unified Auto preference strip
+
+- Source commit: `6567543deb124c3e871665334b9d972f1aa7c879` plus the current working tree.
+- Preference UI: reduced the Topbar control to exactly `EN`、`简中`、`繁中`、sun、moon、lowercase `auto`; removed visible duplicate language/appearance translations, the standalone system appearance button, and the non-interactive theme pill.
+- Auto semantics: clicking `auto` writes both language preference `system` and appearance mode `system`; selecting a language or sun/moon independently clears the combined auto state.
+- Regression coverage: added `src/components/layout/__tests__/quick-preferences.test.tsx` for the six-control surface and the combined Auto reset.
+- Verification passed: targeted QuickPreferences tests (2/2), `npm test` (35 files, 289 tests), `npm run lint` (189 files), `npm run build` (2105 modules), `npm run check:ai-docs` (10 module cards, 366 indexed source/docs files), and `git diff --check`. Browser snapshot/interaction confirmed Dark → Auto state restoration.
+- Manual gaps: native Tauri folder Browse, narrow viewport, and real local configuration writes remain outside this run.

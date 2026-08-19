@@ -30,7 +30,7 @@ describe("ui-store localStorage validation", () => {
     const { useUIStore } = await import("../ui-store");
     const state = useUIStore.getState();
     expect(state.mode).toBe("dark");
-    expect(state.themeName).toBe("claude");
+    expect(state.themeName).toBe("tiesen");
     expect(state.appIcon).toBe("icon-2");
     expect(state.agentVisibility).toBe("detected");
     expect(state.autoDisabledAgents).toEqual(["cursor", "gemini"]);
@@ -71,9 +71,9 @@ describe("ui-store localStorage validation", () => {
 
   it("setThemeName persists to localStorage", async () => {
     const { useUIStore } = await import("../ui-store");
-    useUIStore.getState().setThemeName("claude");
-    expect(localStorage.getItem("hk-theme-name")).toBe("claude");
-    expect(useUIStore.getState().themeName).toBe("claude");
+    useUIStore.getState().setThemeName("tiesen");
+    expect(localStorage.getItem("hk-theme-name")).toBe("tiesen");
+    expect(useUIStore.getState().themeName).toBe("tiesen");
   });
 
   it("toggleSidebar flips the boolean", async () => {
