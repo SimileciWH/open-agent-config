@@ -9,8 +9,11 @@ source_paths:
   - crates/oac-web/src/lib.rs
   - crates/oac-web/src/router.rs
   - crates/oac-web/src/handlers/extensions.rs
+  - crates/oac-web/src/handlers/projects.rs
   - crates/oac-desktop/src/main.rs
   - crates/oac-desktop/src/commands/extensions.rs
+  - crates/oac-desktop/src/commands/projects.rs
+  - crates/oac-core/src/scanner.rs
   - crates/oac-desktop/tauri.conf.json
   - crates/oac-desktop/capabilities/default.json
   - crates/oac-core/src/app_paths.rs
@@ -29,9 +32,12 @@ stable_anchors:
   - crates/oac-web/src/lib.rs::serve
   - crates/oac-web/src/router.rs::build_router
   - crates/oac-web/src/handlers/extensions.rs::toggle_extension
+  - crates/oac-web/src/handlers/projects.rs::discover_projects
   - crates/oac-desktop/src/main.rs::main
   - crates/oac-desktop/src/main.rs::app_update_enabled
   - crates/oac-desktop/src/commands/extensions.rs::toggle_extension
+  - crates/oac-desktop/src/commands/projects.rs::discover_projects
+  - crates/oac-core/src/scanner.rs::discover_git_repositories
   - src/lib/app-update-policy.ts::isAppUpdateEnabledForRuntime
   - scripts/check-release-channel.mjs::validateReleaseChannel
   - scripts/check-oac-identity.mjs::validateIdentity
@@ -64,4 +70,5 @@ known_gaps:
 - Vitest 的 jsdom 环境必须配置非 opaque URL，否则 Node 26 下 `localStorage` 不可用，所有依赖浏览器存储的测试都会在 setup 前失败。
 - 新 Agent 业务代码通常应集中在 `oac-core`，运行时层只做注册和通道接线。
 - CLI、Web、Tauri 必须共享 `app_paths::open_store()`；绕过它会跳过旧数据迁移并产生分裂状态。
+- Web 与 Tauri 的项目路径添加仍共享 `oac-core` 的 Git 仓库发现语义；选择文件夹时限制递归深度并跳过隐藏目录、依赖目录和符号链接目录。
 - 生产依赖不得包含未引用的浏览器自动化工具；lockfile 更新后必须通过冷 `npm ci`、全套前端验证和 `npm audit`。

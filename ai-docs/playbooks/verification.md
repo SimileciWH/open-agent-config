@@ -40,6 +40,16 @@ cargo test -p oac-cli
 cargo tauri dev
 ```
 
+涉及 UI Shell 或项目路径时补充：
+
+```bash
+cargo test -p oac-core scanner::tests::test_discover_git_repositories_finds_directories_and_worktrees
+cargo test -p oac-web
+cargo test -p oac-desktop
+```
+
+并在真实浏览器回读 Topbar 的语言/外观快捷菜单、Settings 的路径粘贴入口和 Git 仓库发现列表；Tauri 原生 Browse 仍需在桌面窗口中单独验收。
+
 ## 结果记录
 
 每次验证必须在 `ai-docs/SYNC_LOG.md` 记录命令、结果、环境和未验证项。没有执行过的命令不能写成通过。

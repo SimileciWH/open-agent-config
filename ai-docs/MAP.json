@@ -9,9 +9,9 @@
     "source_of_truth": "source code and tests"
   },
   "inventory": {
-    "source_files": 341,
+    "source_files": 344,
     "rust_files": 90,
-    "typescript_and_tsx_files": 157,
+    "typescript_and_tsx_files": 160,
     "workflow_files": 4,
     "frontend_root": "src",
     "rust_workspace_root": "crates"
@@ -101,6 +101,25 @@
       "consumers": ["store", "manager", "web extensions handler", "desktop extensions commands"]
     },
     {
+      "id": "core.project-paths",
+      "level": "L2",
+      "status": "runtime-verified",
+      "card": "modules/project-paths.md",
+      "sources": ["crates/oac-core/src/scanner.rs", "crates/oac-web/src/handlers/projects.rs", "crates/oac-desktop/src/commands/projects.rs", "src/lib/invoke.ts", "src/lib/dialog.ts", "src/lib/types.ts", "src/stores/project-store.ts", "src/pages/settings.tsx"],
+      "anchors": [
+        "crates/oac-core/src/scanner.rs::discover_git_repositories",
+        "crates/oac-core/src/scanner.rs::is_git_repository",
+        "crates/oac-core/src/scanner.rs::is_project_dir",
+        "crates/oac-web/src/handlers/projects.rs::discover_projects",
+        "crates/oac-desktop/src/commands/projects.rs::discover_projects",
+        "src/lib/invoke.ts::discoverProjects",
+        "src/stores/project-store.ts::addProject",
+        "src/pages/settings.tsx::handleAddPath",
+        "src/pages/settings.tsx::handleBrowseProject"
+      ],
+      "consumers": ["settings page", "project store", "Web projects handler", "Tauri projects command"]
+    },
+    {
       "id": "core.manager-deployer",
       "level": "L2",
       "status": "runtime-verified",
@@ -157,6 +176,24 @@
         "src/lib/types.ts::agentDisplayName"
       ],
       "consumers": ["src/pages/extensions.tsx", "shared Extension UI components"]
+    },
+    {
+      "id": "ui.frontend-shell",
+      "level": "L2",
+      "status": "runtime-verified",
+      "card": "modules/frontend-shell.md",
+      "sources": ["src/components/layout/app-shell.tsx", "src/components/layout/sidebar.tsx", "src/components/layout/topbar.tsx", "src/components/layout/quick-preferences.tsx", "src/components/layout/__tests__/quick-preferences.test.tsx", "src/components/layout/scope-switcher.tsx", "src/components/layout/scope-switcher-menu.tsx", "src/pages/settings.tsx", "src/stores/ui-store.ts", "src/index.css", "src/lib/i18n/locales/*/*.json"],
+      "anchors": [
+        "src/components/layout/app-shell.tsx::AppShell",
+        "src/components/layout/sidebar.tsx::Sidebar",
+        "src/components/layout/topbar.tsx::Topbar",
+        "src/components/layout/quick-preferences.tsx::QuickPreferences",
+        "src/components/layout/scope-switcher.tsx::ScopeSwitcher",
+        "src/pages/settings.tsx::SettingsPage",
+        "src/stores/ui-store.ts::useUIStore",
+        "src/index.css::workspace-shell"
+      ],
+      "consumers": ["all routed frontend pages", "settings page", "scope store", "UI store"]
     },
     {
       "id": "runtime.boundaries",

@@ -133,6 +133,6 @@ pub async fn discover_projects(
                 "Not a directory: {}", params.root_path
             )));
         }
-        Ok(scanner::discover_projects(root, 4))
+        Ok(scanner::discover_git_repositories(root, 12))
     }).await
 }

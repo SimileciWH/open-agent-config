@@ -6,7 +6,7 @@
 - Node: `v26.3.0`
 - npm: `11.16.0`
 - Rust: `rustc/cargo 1.97.1` from Homebrew
-- Result: all thirteen Golden QA cases answered with source anchors.
+- Result: all fifteen Golden QA cases answered with source anchors.
 
 ## Results
 
@@ -87,6 +87,18 @@ Anchors: `crates/oac-core/src/kits/manifest.rs::validate_manifest_paths`, `crate
 CLI listing and executable lookup both resolve from the embedded OAC registry, so discovery cannot advertise an entry the executor does not allow. Overview tips are loaded from same-origin `/tips.json`. Skills and MCP search retain their documented third-party sources; a future remote CLI registry requires OAC ownership, integrity verification, cache policy and an execution-consistency design.
 
 Anchors: `crates/oac-core/src/marketplace.rs::list_cli_registry`, `crates/oac-core/src/marketplace.rs::get_embedded_cli_entry`, `src/pages/overview.tsx::fetchTips`.
+
+### Q-014 — Project path discovery
+
+单路径添加保留 Git 仓库和 Agent marker 兼容性；选择工作区文件夹时，Web/Tauri handler 调用核心 `discover_git_repositories`，递归识别 `.git` 目录和 worktree `.git` 文件，跳过隐藏/依赖/构建目录和符号链接目录，并按路径稳定排序后交给前端批量确认。
+
+Anchors: `crates/oac-core/src/scanner.rs::discover_git_repositories`, `crates/oac-core/src/scanner.rs::is_git_repository`, `crates/oac-web/src/handlers/projects.rs::discover_projects`, `crates/oac-desktop/src/commands/projects.rs::discover_projects`, `src/pages/settings.tsx::handleBrowseProject`.
+
+### Q-015 — Blue-white shell and compact preferences
+
+`AppShell`、Sidebar、Topbar 和 `QuickPreferences` 组成蓝白工作区；右上角常驻显示 `EN`、`简中`、`繁中`、太阳、月亮和 `auto`，其中 `auto` 同时恢复语言和外观的系统状态。设置页不再重复放置大块语言/外观/主题设置，主题只保留蓝白基础主题。
+
+Anchors: `src/components/layout/app-shell.tsx::AppShell`, `src/components/layout/topbar.tsx::Topbar`, `src/components/layout/quick-preferences.tsx::QuickPreferences`, `src/stores/ui-store.ts::useUIStore`, `src/components/layout/__tests__/quick-preferences.test.tsx::auto restores both language and appearance system`.
 
 ## Automated verification
 

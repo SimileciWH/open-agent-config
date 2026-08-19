@@ -15,10 +15,12 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | `core.adapter` | yes | yes | yes | yes | yes | runtime-verified |
 | `core.scanner` | yes | yes | yes | yes | yes | runtime-verified |
+| `core.project-paths` | yes | yes | yes | yes | yes | runtime-verified |
 | `core.manager-deployer` | yes | yes | yes | yes | yes | runtime-verified |
 | `core.store-models` | yes | yes | yes | yes | yes | runtime-verified |
 | `core.service-install` | yes | yes | yes | yes | yes | runtime-verified |
 | `ui.extension-control` | yes | yes | yes | yes | yes | runtime-verified |
+| `ui.frontend-shell` | yes | yes | yes | yes | yes | runtime-verified |
 | `runtime.boundaries` | yes | yes | yes | yes | yes | runtime-verified |
 | `runtime.app-update-channel` | yes | yes | yes | yes | yes | runtime-verified |
 | `runtime.identity-migration` | yes | yes | yes | yes | yes | runtime-verified |
@@ -41,6 +43,8 @@
 应用自身升级隔离涉及 `runtime.app-update-channel` 和 `runtime.boundaries`；默认关闭策略、Tauri 配置和 CI 门禁已同步到 L2-L4。
 
 OAC 身份重构涉及所有运行时 crate、持久化路径、Kit、managed marker、前端存储、Marketplace 来源、视觉资产、Desktop bundle ID 和发布资产；新增的 `runtime.identity-migration`、`core.kits` 与 `core.marketplace` 已同步到 L2-L4。旧身份只作为迁移输入或上游隔离门禁保留。
+
+本轮 UI 与项目路径改造涉及 `ui.frontend-shell`、`core.project-paths`、`core.scanner` 和 `runtime.boundaries`；快速偏好、Tauri 文件夹选择、递归 Git/worktree 发现及相关前端/Rust 回归测试已同步到 L2-L4。
 
 ## 进入 runtime-verified 的条件
 

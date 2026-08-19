@@ -6,10 +6,12 @@
 | --- | --- | --- |
 | 新增 Agent | `playbooks/add-agent.md` | `crates/oac-core/src/adapter/mod.rs::AgentAdapter` |
 | 扫描 Skills/MCP | `modules/scanner.md` | `crates/oac-core/src/scanner.rs::scan_all` |
+| 添加项目路径/递归发现 Git 仓库 | `modules/project-paths.md` | `crates/oac-core/src/scanner.rs::discover_git_repositories` |
 | Skills 开关 | `playbooks/skills-toggle.md` | `crates/oac-core/src/manager.rs::toggle_skill` |
 | MCP 开关 | `playbooks/mcp-toggle.md` | `crates/oac-core/src/manager.rs::toggle_mcp` |
 | MCP 部署/恢复 | `modules/manager-deployer.md` | `crates/oac-core/src/deployer.rs::deploy_mcp_server` |
 | UI 跨 Agent 分组控制 | `modules/frontend-extension-control.md` | `src/stores/extension-store.ts::toggle` |
+| 蓝白 UI Shell 与快速偏好 | `modules/frontend-shell.md` | `src/components/layout/quick-preferences.tsx::QuickPreferences` |
 | Web/Tauri/CLI 行为差异 | `modules/runtime-boundaries.md` | `crates/oac-web/src/router.rs::build_router` |
 | 数据库和扫描同步 | `modules/store-models.md` | `crates/oac-core/src/store.rs::Store::sync_extensions` |
 | OAC 身份与旧数据迁移 | `modules/identity-migration.md` | `crates/oac-core/src/app_paths.rs::open_store` |
@@ -37,10 +39,12 @@
 
 - [`modules/adapter.md`](modules/adapter.md)
 - [`modules/scanner.md`](modules/scanner.md)
+- [`modules/project-paths.md`](modules/project-paths.md)
 - [`modules/manager-deployer.md`](modules/manager-deployer.md)
 - [`modules/store-models.md`](modules/store-models.md)
 - [`modules/service-install.md`](modules/service-install.md)
 - [`modules/frontend-extension-control.md`](modules/frontend-extension-control.md)
+- [`modules/frontend-shell.md`](modules/frontend-shell.md)
 - [`modules/runtime-boundaries.md`](modules/runtime-boundaries.md)
 - [`modules/app-update-channel.md`](modules/app-update-channel.md)
 - [`modules/identity-migration.md`](modules/identity-migration.md)
@@ -54,6 +58,7 @@
 - [`playbooks/mcp-toggle.md`](playbooks/mcp-toggle.md)
 - [`playbooks/cross-agent-sync.md`](playbooks/cross-agent-sync.md)
 - [`playbooks/verification.md`](playbooks/verification.md)
+- [`playbooks/project-paths.md`](playbooks/project-paths.md)
 - [`playbooks/app-update-channel.md`](playbooks/app-update-channel.md)
 - [`playbooks/identity-migration.md`](playbooks/identity-migration.md)
 - [`playbooks/kit-import-security.md`](playbooks/kit-import-security.md)

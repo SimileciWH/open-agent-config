@@ -86,3 +86,11 @@
 - Full verification passed: `npm test` (35 files, 290 tests), `npm run build` (2104 modules), `npm run lint` (188 files), `npm audit` (0 vulnerabilities), `cargo test --workspace` (662 tests), `cargo clippy --workspace --all-targets -- -D warnings`, `npm run check:oac-identity` (71 allowlisted migration/guard lines), `npm run check:ai-docs` (11 module cards, 371 indexed files), `npm run check:release-channel`, `cargo metadata`, and `git diff --check`.
 - Runtime smoke: isolated-home `oac status` created only `.open-agent-config` state; no real user data was touched.
 - Known gaps: `cargo fmt --all -- --check` exposes pre-existing repository-wide formatting drift; main frontend chunk is 818.36 kB; Kit ZIP resource limits, real desktop migration acceptance, OAC signing/release canaries, and the user's unfinished requirement item 2 remain open.
+
+## 2026-08-19 — Blue-white UI and recursive project discovery
+
+- Source change: integrated the Jira/Wiki-inspired blue-white shell, moved the scope switcher to the Topbar, and added the compact right-side preference strip with `EN`, `简中`, `繁中`, sun, moon, and lowercase `auto`. The settings page no longer repeats the language, appearance, or theme blocks.
+- Project paths: direct path entry still accepts pasted Git/Agent project paths; Tauri folder selection calls the recursive discovery flow, which finds Git directories and linked worktrees, stops at repositories, skips hidden/dependency/build/symlink directories, and returns stable sorted results for batch confirmation.
+- OAC merge boundary: the feature implementation is represented under `crates/oac-core`, `crates/oac-web`, and `crates/oac-desktop`; legacy feature-branch crate names were not carried into the OAC tree.
+- Documentation: added `ui.frontend-shell`, `core.project-paths`, and the project-path verification playbook, plus Golden QA cases Q-014 and Q-015.
+- Initial feature verification: `npm test`, `npm run lint`, `npm run build`, `npm run check:ai-docs`, targeted Rust scanner tests, workspace Rust tests, browser UI acceptance, and `git diff --check` passed before the main-branch merge. Final post-merge results and merge commit are recorded in the follow-up entry below.

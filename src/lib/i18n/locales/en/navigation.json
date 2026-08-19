@@ -1,4 +1,7 @@
 {
+  "workspace": "Workspace",
+  "controlCenter": "Control center",
+  "node": "Node",
   "overview": "Overview",
   "kits": "Kits",
   "agents": "Agents",

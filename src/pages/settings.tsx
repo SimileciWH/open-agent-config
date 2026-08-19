@@ -4,10 +4,12 @@ import {
   Download,
   FolderOpen,
   FolderSearch,
+  GitBranch,
   Loader2,
   Pencil,
   Plus,
   RefreshCw,
+  ScanSearch,
   Trash2,
   TriangleAlert,
   X,
@@ -17,65 +19,16 @@ import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { isAppUpdateEnabledForRuntime } from "@/lib/app-update-policy";
 import { openDirectoryPicker } from "@/lib/dialog";
-import {
-  applyLanguagePreference,
-  getStoredLanguagePreference,
-  type LanguagePreference,
-} from "@/lib/i18n";
 import { api } from "@/lib/invoke";
 import { isDesktop } from "@/lib/transport";
 import { agentDisplayName, type DiscoveredProject } from "@/lib/types";
 import { useAgentStore } from "@/stores/agent-store";
 import { useProjectStore } from "@/stores/project-store";
 import { toast } from "@/stores/toast-store";
-import type { AgentVisibility, AppIcon, ThemeName } from "@/stores/ui-store";
+import type { AgentVisibility } from "@/stores/ui-store";
 import { useUIStore } from "@/stores/ui-store";
 import { useUpdateStore } from "@/stores/update-store";
 import { useWebUpdateStore } from "@/stores/web-update-store";
-
-const THEME_OPTIONS: {
-  value: ThemeName;
-  label: string;
-  colors: [string, string, string];
-}[] = [
-  {
-    value: "tiesen",
-    label: "Tiesen",
-    colors: [
-      "oklch(0.5144 0.1605 267.4400)",
-      "oklch(0.9851 0 0)",
-      "oklch(0 0 0)",
-    ],
-  },
-  {
-    value: "claude",
-    label: "Claude",
-    colors: [
-      "oklch(0.6171 0.1375 39.0427)",
-      "oklch(0.9665 0.0067 97.3521)",
-      "oklch(0.2679 0.0036 106.6427)",
-    ],
-  },
-];
-
-const ICON_OPTIONS: { value: AppIcon; label: string; src: string }[] = [
-  { value: "icon-1", label: "OAC Navy", src: "/icons/app-icon-1.png" },
-  { value: "icon-2", label: "OAC Orange", src: "/icons/app-icon-2.png" },
-];
-
-const LANGUAGE_OPTIONS: {
-  value: LanguagePreference;
-  labelKey:
-    | "language.system"
-    | "language.en"
-    | "language.zh"
-    | "language.zh-TW";
-}[] = [
-  { value: "system", labelKey: "language.system" },
-  { value: "en", labelKey: "language.en" },
-  { value: "zh", labelKey: "language.zh" },
-  { value: "zh-TW", labelKey: "language.zh-TW" },
-];
 
 const AGENT_VISIBILITY_OPTIONS: {
   value: AgentVisibility;
@@ -191,16 +144,9 @@ function AppVersionSection() {
 export default function SettingsPage() {
   const { t } = useTranslation("settings");
   const { t: tc } = useTranslation("common");
-  const languagePreference = getStoredLanguagePreference();
   const {
-    themeName,
-    mode,
-    appIcon,
     agentVisibility,
     autoDisabledAgents,
-    setThemeName,
-    setMode,
-    setAppIcon: setAppIconState,
     setAgentVisibility,
     setAutoDisabledAgents,
   } = useUIStore();
@@ -275,6 +221,27 @@ export default function SettingsPage() {
 
   const existingPaths = new Set(projects.map((p) => p.path));
 
+  const showDiscoveredProjects = (results: DiscoveredProject[]) => {
+    if (results.length === 0) {
+      toast.error(t("projectPaths.toast.noProjectsFound"));
+      return;
+    }
+
+    setDiscoveredProjects(results);
+    setDiscoveredSelected(
+      new Set(
+        results
+          .map((result) => result.path)
+          .filter((item) => !existingPaths.has(item)),
+      ),
+    );
+  };
+
+  const discoverProjectsInPath = async (path: string) => {
+    const results = await api.discoverProjects(path);
+    showDiscoveredProjects(results);
+  };
+
   const handleAddPath = async (path: string) => {
     if (!path) return;
     setAdding(true);
@@ -285,13 +252,7 @@ export default function SettingsPage() {
       toast.success(t("projectPaths.toast.projectAdded"));
     } catch {
       try {
-        const results = await api.discoverProjects(path);
-        if (results.length > 0) {
-          setDiscoveredProjects(results);
-          setDiscoveredSelected(new Set());
-        } else {
-          toast.error(t("projectPaths.toast.noProjectsFound"));
-        }
+        await discoverProjectsInPath(path);
       } catch (e) {
         console.error("Failed to discover projects:", e);
         toast.error(t("projectPaths.toast.failedDiscover"));
@@ -305,7 +266,17 @@ export default function SettingsPage() {
     const path = await openDirectoryPicker({
       title: t("projectPaths.selectDir"),
     });
-    if (path) handleAddPath(path);
+    if (!path) return;
+
+    setAdding(true);
+    try {
+      await discoverProjectsInPath(path);
+    } catch (e) {
+      console.error("Failed to discover projects:", e);
+      toast.error(t("projectPaths.toast.failedDiscover"));
+    } finally {
+      setAdding(false);
+    }
   };
 
   const handleAddDiscovered = async () => {
@@ -347,44 +318,55 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col min-h-0 -mb-6">
-      <div className="shrink-0 pb-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold tracking-tight select-none">
-            {t("title")}
-          </h2>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="shrink-0 border-b border-border/70 pb-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-primary/70">
+              {tc("settingsLabel")}
+            </p>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground select-none">
+              {t("title")}
+            </h2>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+              {t("subtitle")}
+            </p>
+          </div>
           <AppVersionSection />
         </div>
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto">
-        <div className="max-w-2xl mx-auto space-y-8 pb-6">
+        <div className="mx-auto max-w-4xl space-y-8 pb-6 pt-7">
           {/* Agent Paths */}
-          <section className="space-y-4">
+          <section className="settings-section space-y-4">
             {/* Header: title + description, with visibility toggle top-right */}
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground">
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-primary" />
+                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary/70">
+                    01
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-foreground">
                   {t("agentPaths.section")}
                 </h3>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {t("agentPaths.description")}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="mt-1 text-xs text-muted-foreground/75">
                   {t("agentPaths.visibilityHint")}
                 </p>
               </div>
-              <div className="flex shrink-0 rounded-lg border border-border">
-                {AGENT_VISIBILITY_OPTIONS.map((opt, i) => (
+              <div className="flex shrink-0 rounded-xl border border-border/80 bg-background/70 p-1">
+                {AGENT_VISIBILITY_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
                     onClick={() => handleVisibilityChange(opt.value)}
                     aria-pressed={agentVisibility === opt.value}
                     className={clsx(
-                      "px-3 py-1 text-xs font-medium transition-colors duration-200",
-                      i === 0 && "rounded-l-lg",
-                      i === AGENT_VISIBILITY_OPTIONS.length - 1 &&
-                        "rounded-r-lg",
+                      "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors duration-200",
                       agentVisibility === opt.value
                         ? "bg-primary text-primary-foreground shadow-sm"
                         : "text-muted-foreground hover:bg-accent",
@@ -396,7 +378,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="flex flex-col rounded-lg border border-border bg-card shadow-sm divide-y divide-border">
+            <div className="flex flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm divide-y divide-border/70">
               {agentNames.map((agent) => {
                 const info = agentMap.get(agent);
                 const isEnabled = info?.enabled ?? true;
@@ -410,7 +392,7 @@ export default function SettingsPage() {
                   <div
                     key={agent}
                     className={clsx(
-                      "flex items-center gap-3 px-4 py-2.5 transition-opacity",
+                      "flex items-center gap-3 px-4 py-3 transition-colors transition-opacity hover:bg-primary/[0.025]",
                       !isEnabled && "opacity-50",
                     )}
                   >
@@ -533,17 +515,27 @@ export default function SettingsPage() {
           {/* Project Paths */}
           <section
             id="project-paths"
-            className="space-y-4 border-t border-border pt-8"
+            className="settings-section space-y-5 border-t border-border/70 pt-8"
           >
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-sky-500" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-sky-600 dark:text-sky-300">
+                  02
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-foreground">
                 {t("projectPaths.section")}
               </h3>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
                 {t("projectPaths.description")}
               </p>
+              <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-primary/75">
+                <GitBranch size={13} />
+                {t("projectPaths.recursiveHint")}
+              </p>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-col gap-2 rounded-2xl border border-primary/20 bg-primary/[0.045] p-3 shadow-sm sm:flex-row sm:items-center">
               <input
                 type="text"
                 placeholder={
@@ -562,23 +554,28 @@ export default function SettingsPage() {
                   )
                     handleAddPath(projectPathInput.trim());
                 }}
-                className="flex-1 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                aria-label={t("projectPaths.inputAria")}
+                className="min-w-0 flex-1 rounded-xl border border-border/80 bg-card px-3.5 py-2.5 text-sm text-foreground shadow-inner placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
               />
               {isDesktop() && (
                 <button
                   type="button"
                   disabled={adding}
                   onClick={handleBrowseProject}
-                  className="shrink-0 rounded-md border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40"
+                  className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-border/80 bg-card px-3 py-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-40"
                   title={t("projectPaths.browse")}
                 >
                   <FolderSearch size={16} />
+                  <span className="sm:hidden lg:inline">
+                    {t("projectPaths.browse")}
+                  </span>
                 </button>
               )}
               <button
                 onClick={() => handleAddPath(projectPathInput.trim())}
                 disabled={adding || !projectPathInput.trim()}
-                className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs text-primary-foreground shadow-sm transition-[color,background-color,box-shadow] duration-200 hover:bg-primary/90 hover:shadow-md disabled:opacity-50"
+                aria-label={t("projectPaths.addAria")}
+                className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-sm transition-[color,background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-md disabled:opacity-50"
               >
                 {adding ? (
                   <Loader2 size={12} className="animate-spin" />
@@ -591,26 +588,43 @@ export default function SettingsPage() {
 
             {/* Discovered projects (shown when user selected a non-project root dir) */}
             {discoveredProjects !== null && (
-              <div className="rounded-lg border border-border bg-card p-4 space-y-3 shadow-sm">
-                <p className="text-xs text-muted-foreground">
-                  {t("projectPaths.notProject", {
-                    count: discoveredProjects.length,
-                  })}
-                </p>
+              <div className="space-y-4 rounded-2xl border border-sky-300/50 bg-sky-50/70 p-4 shadow-sm dark:border-sky-400/20 dark:bg-sky-950/20">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-300">
+                      <ScanSearch size={17} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">
+                        {t("projectPaths.discoveryTitle")}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                        {t("projectPaths.notProject", {
+                          count: discoveredProjects.length,
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  {discoveredProjects.length > 0 && (
+                    <span className="shrink-0 rounded-full bg-sky-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-sky-700 dark:text-sky-300">
+                      {discoveredProjects.length} Git
+                    </span>
+                  )}
+                </div>
                 {discoveredProjects.length === 0 ? (
                   <p className="text-xs text-muted-foreground italic">
                     {t("projectPaths.noneFound")}
                   </p>
                 ) : (
                   <>
-                    <div className="space-y-1 max-h-48 overflow-y-auto overscroll-contain">
+                    <div className="max-h-64 space-y-1 overflow-y-auto overscroll-contain rounded-xl border border-sky-300/40 bg-card/75 p-1.5 dark:border-sky-400/15">
                       {discoveredProjects.map((dp) => {
                         const already = existingPaths.has(dp.path);
                         return (
                           <label
                             key={dp.path}
                             className={clsx(
-                              "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer transition-colors",
+                              "flex cursor-pointer items-center gap-3 rounded-xl px-2.5 py-2 text-sm transition-colors",
                               already
                                 ? "opacity-50 cursor-not-allowed"
                                 : "hover:bg-muted",
@@ -621,13 +635,17 @@ export default function SettingsPage() {
                               disabled={already}
                               checked={discoveredSelected.has(dp.path)}
                               onChange={() => toggleDiscovered(dp.path)}
-                              className="rounded border-border"
+                              className="h-4 w-4 rounded border-border accent-primary"
+                            />
+                            <GitBranch
+                              size={15}
+                              className="shrink-0 text-primary/70"
                             />
                             <div className="min-w-0 flex-1">
-                              <span className="font-medium text-foreground">
+                              <span className="font-semibold text-foreground">
                                 {dp.name}
                               </span>
-                              <span className="ml-2 text-xs text-muted-foreground truncate">
+                              <span className="mt-0.5 block truncate text-xs text-muted-foreground">
                                 {dp.path}
                               </span>
                             </div>
@@ -640,22 +658,29 @@ export default function SettingsPage() {
                         );
                       })}
                     </div>
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => setDiscoveredProjects(null)}
-                        className="rounded-lg border border-border px-3 py-1 text-xs text-muted-foreground hover:bg-muted"
-                      >
-                        {t("projectPaths.cancel")}
-                      </button>
-                      <button
-                        onClick={handleAddDiscovered}
-                        disabled={discoveredSelected.size === 0 || adding}
-                        className="rounded-lg bg-primary px-3 py-1 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                      >
-                        {t("projectPaths.addSelected", {
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {t("projectPaths.selectedCount", {
                           count: discoveredSelected.size,
                         })}
-                      </button>
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setDiscoveredProjects(null)}
+                          className="rounded-xl border border-border/80 bg-card px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-muted"
+                        >
+                          {t("projectPaths.cancel")}
+                        </button>
+                        <button
+                          onClick={handleAddDiscovered}
+                          disabled={discoveredSelected.size === 0 || adding}
+                          className="rounded-xl bg-primary px-3 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                        >
+                          {t("projectPaths.addSelected", {
+                            count: discoveredSelected.size,
+                          })}
+                        </button>
+                      </div>
                     </div>
                   </>
                 )}
@@ -668,8 +693,8 @@ export default function SettingsPage() {
                 {tc("status.loading")}
               </p>
             ) : projects.length === 0 ? (
-              <div className="rounded-lg border-2 border-dashed border-border bg-muted/20 p-6">
-                <h4 className="text-sm font-medium text-foreground">
+              <div className="rounded-2xl border-2 border-dashed border-primary/20 bg-primary/[0.025] p-7">
+                <h4 className="text-sm font-bold text-foreground">
                   {t("projectPaths.emptyTitle")}
                 </h4>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -677,19 +702,21 @@ export default function SettingsPage() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-1">
+              <div className="grid gap-3 md:grid-cols-2">
                 {projects.map((project) => (
                   <div
                     key={project.id}
                     className={clsx(
-                      "flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm border bg-card shadow-sm",
-                      project.exists ? "border-border" : "border-border",
+                      "flex min-w-0 w-full items-start gap-3 rounded-2xl border bg-card px-4 py-3.5 text-sm shadow-sm transition-transform hover:-translate-y-0.5 hover:shadow-md",
+                      project.exists
+                        ? "border-border/80"
+                        : "border-amber-300/60 dark:border-amber-400/30",
                     )}
                   >
                     <FolderOpen
-                      size={14}
+                      size={17}
                       className={clsx(
-                        "shrink-0",
+                        "mt-0.5 shrink-0",
                         project.exists
                           ? "text-muted-foreground"
                           : "text-muted-foreground/50",
@@ -698,7 +725,7 @@ export default function SettingsPage() {
                     <div className="min-w-0 flex-1">
                       <span
                         className={clsx(
-                          "font-medium",
+                          "font-bold",
                           project.exists
                             ? "text-foreground"
                             : "text-muted-foreground line-through",
@@ -707,12 +734,12 @@ export default function SettingsPage() {
                         {project.name}
                       </span>
                       {!project.exists && (
-                        <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground inline-flex items-center gap-1">
+                        <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-700 dark:text-amber-300">
                           <TriangleAlert size={10} />{" "}
                           {t("projectPaths.missing")}
                         </span>
                       )}
-                      <span className="ml-2 text-xs text-muted-foreground truncate">
+                      <span className="mt-1 block truncate text-xs text-muted-foreground">
                         {project.path}
                       </span>
                     </div>
@@ -722,7 +749,7 @@ export default function SettingsPage() {
                         removeProject(project.id);
                         toast.success(t("projectPaths.toast.projectRemoved"));
                       }}
-                      className="text-muted-foreground hover:text-destructive transition-colors cursor-pointer focus:outline-none"
+                      className="shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus:outline-none"
                       aria-label={t("projectPaths.removeAria", {
                         name: project.name,
                       })}
@@ -733,167 +760,6 @@ export default function SettingsPage() {
                 ))}
               </div>
             )}
-          </section>
-
-          {/* Appearance */}
-          <section className="space-y-4 border-t border-border pt-8">
-            <h3 className="text-sm font-medium text-muted-foreground">
-              {t("appearance.title")}
-            </h3>
-
-            <div className="flex flex-col gap-2 rounded-lg border border-border bg-card px-4 py-2.5 shadow-sm">
-              {/* Theme */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm">{t("appearance.theme")}</span>
-                <div className="flex rounded-lg border border-border">
-                  {THEME_OPTIONS.map((theme, i) => (
-                    <button
-                      key={theme.value}
-                      onClick={() => {
-                        setThemeName(theme.value);
-                        toast.success(
-                          t("appearance.themeToast", { label: theme.label }),
-                        );
-                      }}
-                      aria-pressed={themeName === theme.value}
-                      className={clsx(
-                        "flex items-center gap-1.5 px-3 py-1 text-xs font-medium transition-colors duration-200",
-                        i === 0 && "rounded-l-lg",
-                        i === THEME_OPTIONS.length - 1 && "rounded-r-lg",
-                        themeName === theme.value
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:bg-accent",
-                      )}
-                    >
-                      <span
-                        className="h-2.5 w-2.5 rounded-full border border-primary-foreground/20"
-                        style={{
-                          backgroundColor:
-                            themeName === theme.value
-                              ? "oklch(1 0 0 / 0.9)"
-                              : theme.colors[0],
-                        }}
-                      />
-                      {theme.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="border-t border-border" />
-
-              {/* Mode */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm">{t("appearance.mode.label")}</span>
-                <div className="flex rounded-lg border border-border">
-                  {(["system", "light", "dark"] as const).map((m, i) => (
-                    <button
-                      key={m}
-                      onClick={() => {
-                        setMode(m);
-                        toast.success(
-                          t("appearance.modeToast", {
-                            label: t(`appearance.mode.${m}`),
-                          }),
-                        );
-                      }}
-                      aria-pressed={mode === m}
-                      className={clsx(
-                        "px-3 py-1 text-xs font-medium transition-colors duration-200",
-                        i === 0 && "rounded-l-lg",
-                        i === 2 && "rounded-r-lg",
-                        mode === m
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:bg-accent",
-                      )}
-                    >
-                      {t(`appearance.mode.${m}`)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {isDesktop() && (
-                <>
-                  <div className="border-t border-border" />
-
-                  {/* App Icon — desktop only */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">{t("appearance.appIcon")}</span>
-                    <div className="flex gap-2">
-                      {ICON_OPTIONS.map((icon) => (
-                        <button
-                          key={icon.value}
-                          onClick={() => {
-                            setAppIconState(icon.value);
-                            api
-                              .setAppIcon(icon.value)
-                              .then(() => {
-                                toast.success(
-                                  t("appearance.iconToast", {
-                                    label: icon.label,
-                                  }),
-                                );
-                              })
-                              .catch(() => {
-                                toast.error(t("appearance.iconFailed"));
-                              });
-                          }}
-                          aria-pressed={appIcon === icon.value}
-                          className={clsx(
-                            "rounded-lg p-0.5 transition-all duration-200",
-                            appIcon === icon.value
-                              ? "ring-2 ring-primary ring-offset-2 ring-offset-card"
-                              : "ring-1 ring-border hover:ring-primary/50",
-                          )}
-                        >
-                          <img
-                            src={icon.src}
-                            alt={icon.label}
-                            className="h-10 w-10 rounded-md"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </section>
-
-          {/* Language */}
-          <section className="space-y-4 border-t border-border pt-8">
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">
-                {t("language.label")}
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                {t("language.description")}
-              </p>
-            </div>
-            <div className="flex items-center justify-end rounded-lg border border-border bg-card px-4 py-2.5 shadow-sm">
-              <div className="flex rounded-lg border border-border">
-                {LANGUAGE_OPTIONS.map((opt, i) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => {
-                      void applyLanguagePreference(opt.value);
-                    }}
-                    aria-pressed={languagePreference === opt.value}
-                    className={clsx(
-                      "px-3 py-1 text-xs font-medium transition-colors duration-200",
-                      i === 0 && "rounded-l-lg",
-                      i === LANGUAGE_OPTIONS.length - 1 && "rounded-r-lg",
-                      languagePreference === opt.value
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:bg-accent",
-                    )}
-                  >
-                    {t(opt.labelKey)}
-                  </button>
-                ))}
-              </div>
-            </div>
           </section>
 
           {/* Footer */}

@@ -90,5 +90,5 @@ pub fn discover_projects(root_path: String) -> Result<Vec<DiscoveredProject>, Oa
             root_path
         )));
     }
-    Ok(scanner::discover_projects(root, 4))
+    Ok(scanner::discover_git_repositories(root, 12))
 }

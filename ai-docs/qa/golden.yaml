@@ -106,3 +106,22 @@ cases:
       - crates/oac-core/src/marketplace.rs::get_embedded_cli_entry
       - src/pages/overview.tsx::fetchTips
     acceptance: The answer states that CLI listing and execution share the embedded registry, tips are same-origin, and any future remote registry needs OAC ownership and integrity controls.
+  - id: Q-014
+    level: L3
+    question: How does project path selection discover Git repositories recursively?
+    expected_anchors:
+      - crates/oac-core/src/scanner.rs::discover_git_repositories
+      - crates/oac-core/src/scanner.rs::is_git_repository
+      - crates/oac-web/src/handlers/projects.rs::discover_projects
+      - crates/oac-desktop/src/commands/projects.rs::discover_projects
+      - src/pages/settings.tsx::handleBrowseProject
+    acceptance: The answer distinguishes single-project add from folder discovery, covers .git directories and worktree files, bounded recursion, skipped directories, stable sorting, and batch confirmation.
+  - id: Q-015
+    level: L3
+    question: What controls are visible in the blue-white shell's compact preferences strip?
+    expected_anchors:
+      - src/components/layout/app-shell.tsx::AppShell
+      - src/components/layout/topbar.tsx::Topbar
+      - src/components/layout/quick-preferences.tsx::QuickPreferences
+      - src/stores/ui-store.ts::useUIStore
+    acceptance: The answer lists EN, 简中, 繁中, sun, moon, and lowercase auto, and explains that auto jointly selects system language and system appearance while the settings page no longer repeats those blocks.

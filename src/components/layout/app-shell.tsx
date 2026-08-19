@@ -5,6 +5,7 @@ import { ToastContainer } from "@/components/shared/toast-container";
 import { useProjectStore } from "@/stores/project-store";
 import { useScopeStore } from "@/stores/scope-store";
 import { Sidebar } from "./sidebar";
+import { Topbar } from "./topbar";
 
 const INTERACTIVE = "a, button, input, select, textarea, [role='button']";
 // A mousedown/dblclick on these must not drive the window: interactive
@@ -87,18 +88,17 @@ export function AppShell() {
   }, []);
 
   return (
-    <div className="h-screen overflow-hidden text-foreground">
-      {/* Frosted glass surface */}
-      <div className="flex h-full bg-sidebar/25 backdrop-blur-xl backdrop-saturate-150 backdrop-brightness-105">
+    <div className="workspace-shell h-screen overflow-hidden text-foreground">
+      <div className="flex h-full min-h-0 bg-background/95">
         <Sidebar />
 
-        {/* py+pr padding exposes frosted surface on top / right / bottom */}
-        <div className="flex-1 flex flex-col min-w-0 py-2.5 pr-2.5">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <Topbar />
           <main
             ref={mainRef}
-            className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden rounded-xl bg-background border border-border/50 shadow-[inset_0_1px_3px_-1px_var(--border)] p-6"
+            className="m-3 flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden rounded-2xl border border-border/70 bg-card p-6 shadow-[0_10px_40px_color-mix(in_oklch,var(--primary)_7%,transparent)] sm:p-7"
           >
-            <div className="flex-1 flex flex-col min-h-0">
+            <div className="page-enter flex min-h-0 flex-1 flex-col">
               <Outlet />
             </div>
           </main>
